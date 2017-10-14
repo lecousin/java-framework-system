@@ -33,6 +33,7 @@ import net.lecousin.framework.util.AsyncCloseable;
 public class DrivesUnixUdev extends Drives {
 
 	private WorkProgress init = null;
+
 	@Override
 	public WorkProgress initialize() {
 		if (init != null) return init;
@@ -65,12 +66,14 @@ public class DrivesUnixUdev extends Drives {
 			}
 		}
 	}
+
 	@Override
 	public void addDriveListener(DriveListener listener) {
 		synchronized (listeners) {
 			listeners.add(listener);
 		}
 	}
+	
 	@Override
 	public void removeDriveListener(DriveListener listener) {
 		synchronized (listeners) {
