@@ -1,0 +1,2 @@
+net.lecousin.framework.adapter.AdapterRegistry:net.lecousin.framework.system.hardware.DiskPartition$ToFile
+net.lecousin.framework.adapter.AdapterRegistry:net.lecousin.framework.system.hardware.Drives$PhysicalDriveToReadable
