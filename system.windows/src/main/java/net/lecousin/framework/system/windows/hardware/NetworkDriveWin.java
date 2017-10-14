@@ -6,8 +6,12 @@ import java.util.List;
 
 import net.lecousin.framework.system.hardware.NetworkDrive;
 
+/**
+ * Network drive.
+ */
 public class NetworkDriveWin implements NetworkDrive {
 
+	/** Constructor. */
 	public NetworkDriveWin(File mountPoint) {
 		this.mountPoint = mountPoint;
 	}

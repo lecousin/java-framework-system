@@ -12,8 +12,12 @@ import net.lecousin.framework.system.software.Processes;
 import net.lecousin.framework.system.windows.hardware.DrivesWin;
 import net.lecousin.framework.system.windows.software.ProcessesWin;
 
+/**
+ * Initialization.
+ */
 public class Init implements CustomExtensionPoint {
 
+	/** Constructor called by the extension point system. */
 	public Init() {
 		for (File f : LCCore.get().getSystemLibraries().getLibrariesLocations()) {
 			if (f.getName().startsWith("jacob-")) {
@@ -24,7 +28,7 @@ public class Init implements CustomExtensionPoint {
 			}
 		}
 		Drives.setInstance(new DrivesWin());
-		Processes.instance = new ProcessesWin();
+		Processes.setInstance(new ProcessesWin());
 		LCSystem.log.info("System initialized with Windows implementation");
 	}
 

@@ -35,15 +35,17 @@ import net.lecousin.framework.system.hardware.Drives;
 import net.lecousin.framework.system.hardware.PhysicalDrive;
 import net.lecousin.framework.system.hardware.PhysicalDrive.InterfaceType;
 import net.lecousin.framework.system.windows.WMI;
+import net.lecousin.framework.system.windows.Win32HandleStream;
 import net.lecousin.framework.system.windows.Win32IOException;
-import net.lecousin.framework.system.windows.Win32_Handle_Stream;
 import net.lecousin.framework.system.windows.WindowsSystem;
 import net.lecousin.framework.system.windows.WindowsUtil;
 import net.lecousin.framework.system.windows.jna.Kernel32;
 
+/** Drives implementation for Windows. */
 public class DrivesWin extends Drives {
 
 	private WorkProgress init = null;
+	
 	@Override
 	public synchronized WorkProgress initialize() {
 		if (init != null) return init;
@@ -66,15 +68,16 @@ public class DrivesWin extends Drives {
 	private static final int DBT_DEVICE_REMOVECOMPLETE = 0x8004;
 	private static final int DBT_DEVNODES_CHANGED = 0x0007; // A device has been added to or removed from the system.
 	private WindowsSystem.WindowsListener deviceChangeListener = new WindowsSystem.WindowsListener() {
+		// skip checkstyle: ParameterName
 		@Override
-		public void fire(int event_id, WPARAM uParam, LPARAM lParam) {
+		public void fire(int eventId, WPARAM uParam, LPARAM lParam) {
 			switch (uParam.intValue()) {
 			case DBT_DEVICE_ARRIVAL:
 			case DBT_DEVICE_REMOVECOMPLETE:
 			case DBT_DEVNODES_CHANGED: // without this one, sometimes USB are not detected
 				loadDrives(null);
 				break;
-			default:
+			default: break;
 			}
 		}
 	};
@@ -96,12 +99,14 @@ public class DrivesWin extends Drives {
 			}
 		}
 	}
+	
 	@Override
 	public void addDriveListener(DriveListener listener) {
 		synchronized (listeners) {
 			listeners.add(listener);
 		}
 	}
+	
 	@Override
 	public void removeDriveListener(DriveListener listener) {
 		synchronized (listeners) {
@@ -114,16 +119,21 @@ public class DrivesWin extends Drives {
 	public <T extends Readable.Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, byte priority) throws IOException {
 		if (!(drive instanceof PhysicalDriveWin)) throw new IOException("Invalid drive");
 		PhysicalDriveWin d = (PhysicalDriveWin)drive;
-		HANDLE h = openDevice(d.OSID, true, false);
-		Object task_manager_resource = Threading.CPU;
+		HANDLE h = openDevice(d.osId, true, false);
+		Object taskManagerResource = Threading.CPU;
 		for (Object o : Threading.getDrivesTaskManager().getResources())
-			if (o == drive) { task_manager_resource = o; break; }
-		return (T)new Win32_Handle_Stream(h, d.size, d.OSID, task_manager_resource, priority);
+			if (o == drive) {
+				taskManagerResource = o;
+				break;
+			}
+		return (T)new Win32HandleStream(h, d.size, d.osId, taskManagerResource, priority);
 	}
+	
 	@Override
 	public <T extends Readable.Seekable & KnownSize & Writable.Seekable> T openReadWrite(PhysicalDrive drive, byte priority) throws IOException {
 		throw new IOException("Write not supported");
 	}
+	
 	@Override
 	public <T extends Writable.Seekable & KnownSize> T openWriteOnly(PhysicalDrive drive, byte priority) throws IOException {
 		throw new IOException("Write not supported");
@@ -131,7 +141,7 @@ public class DrivesWin extends Drives {
 
 	private static HANDLE openDevice(String device_id, boolean readable, boolean writable) throws IOException {
 		HANDLE h = com.sun.jna.platform.win32.Kernel32.INSTANCE.CreateFile(
-				"\\\\.\\"+device_id, 
+				"\\\\.\\" + device_id, 
 				(writable ? WinNT.GENERIC_WRITE : 0) | (readable ? 0x80000000 : 0), 
 				3, // read and write allowed 
 				null, 
@@ -145,30 +155,32 @@ public class DrivesWin extends Drives {
 			// we may need to elevate privileges of current process
 			// TODO
 		}*/
-		Win32IOException.throw_last_error(h);
+		Win32IOException.throwLastError(h);
 		return null; // never reached, only for compilation purpose
 	}
 	
 	private void loadDrives(WorkProgress progress) {
 		Kernel32 lib = Kernel32.INSTANCE;
-        byte[] buffer = new byte[65536];
-        int result;
+		byte[] buffer = new byte[65536];
+		int result;
         
-        // TODO check really the speed of each step to better distribute
-        long stepRoots, stepDevices, stepWMI;
-        if (progress != null) {
-        	stepRoots = progress.getRemainingWork() / 5;
-        	stepDevices = progress.getRemainingWork() / 5;
-        	stepWMI = progress.getRemainingWork() - stepRoots - stepDevices;
-        } else
-        	stepRoots = stepDevices = stepWMI = 0;
+		// TODO check really the speed of each step to better distribute
+		long stepRoots;
+		long stepDevices;
+		long stepWMI;
+		if (progress != null) {
+			stepRoots = progress.getRemainingWork() / 5;
+			stepDevices = progress.getRemainingWork() / 5;
+			stepWMI = progress.getRemainingWork() - stepRoots - stepDevices;
+		} else
+			stepRoots = stepDevices = stepWMI = 0;
 
-        // list mounted partitions
-		Map<String,File> roots_names = new HashMap<String,File>();
+		// list mounted partitions
+		Map<String,File> rootsNames = new HashMap<String,File>();
 		File[] roots = File.listRoots();
 		int nbSteps = roots.length;
 		if (progress != null) {
-			long step = stepRoots / (nbSteps+1);
+			long step = stepRoots / (nbSteps + 1);
 			stepRoots -= step;
 			progress.progress(step);
 		}
@@ -178,17 +190,21 @@ public class DrivesWin extends Drives {
 			stepRoots -= step;
         	String device = root.getAbsolutePath();
         	int i = device.indexOf(':');
-        	device = device.substring(0, i+1);
-			result = lib.QueryDosDeviceW(WindowsUtil.toUNICODE(device), buffer, 65536);
+        	device = device.substring(0, i + 1);
+			result = lib.QueryDosDeviceW(WindowsUtil.toUnicode(device), buffer, 65536);
             if (result != 0) {
             	List<String> ss = WindowsUtil.toStrings(buffer);
             	if (ss.size() == 1) {
-            		roots_names.put(ss.get(0), root);
-            		if (LCSystem.log.debug()) LCSystem.log.debug("Mount point "+root.getAbsolutePath()+" is on device "+ss.get(0));
+            		rootsNames.put(ss.get(0), root);
+            		if (LCSystem.log.debug()) LCSystem.log.debug("Mount point " + root.getAbsolutePath() + " is on device " + ss.get(0));
             	} else
-            		if (LCSystem.log.error()) LCSystem.log.error("Unexpected response for mount point "+root.getAbsolutePath()+": "+ss.size()+" strings, 1 expected");
+            		if (LCSystem.log.error())
+            			LCSystem.log.error("Unexpected response for mount point " + root.getAbsolutePath() + ": "
+            				+ ss.size() + " strings, 1 expected");
             } else
-            	if (LCSystem.log.error()) LCSystem.log.error("Unable to get information about mount point "+root.getAbsolutePath()+": "+Win32IOException.getLastError());
+            	if (LCSystem.log.error())
+            		LCSystem.log.error("Unable to get information about mount point " + root.getAbsolutePath() + ": "
+            			+ Win32IOException.getLastError());
             if (progress != null) progress.progress(step);
 		}
 
@@ -196,7 +212,7 @@ public class DrivesWin extends Drives {
         if (result == 0) {
         	if (progress != null) progress.done();
         	if (LCSystem.log.error())
-        		LCSystem.log.error("Unable to retrieve the list of devices: "+Win32IOException.getLastError());
+        		LCSystem.log.error("Unable to retrieve the list of devices: " + Win32IOException.getLastError());
         	return;
         }
         List<String> devices = WindowsUtil.toStrings(buffer);
@@ -208,52 +224,59 @@ public class DrivesWin extends Drives {
         }
 
         List<Drive> drives = new LinkedList<Drive>();
-        for (String device_id : devices) {
+        for (String deviceId : devices) {
         	long step = stepDevices / nbSteps--;
         	stepDevices -= step;
         	PhysicalDriveWin drive = null;
-        	if (device_id.startsWith("PhysicalDrive")) {
+        	if (deviceId.startsWith("PhysicalDrive")) {
         		// new hard disk
         		drive = new PhysicalDriveWin();
-        		drive.OSID = device_id;
+        		drive.osId = deviceId;
         		drive.type = PhysicalDrive.Type.HARDDISK;
-        		if (LCSystem.log.debug()) LCSystem.log.debug("Disk detected: "+device_id);
+        		if (LCSystem.log.debug()) LCSystem.log.debug("Disk detected: " + deviceId);
         		// look for volumes
-        		int hd_index = Integer.parseInt(device_id.substring(13));
-        		String volume_start = "Harddisk"+hd_index+"Partition";
-        		for (String volume_id : devices) {
-        			if (volume_id.startsWith(volume_start)) {
-        				if (LCSystem.log.debug()) LCSystem.log.debug("Partition detected for "+device_id+": "+volume_id);
-        				int partition_index = Integer.parseInt(volume_id.substring(volume_start.length()));
+        		int hdIndex = Integer.parseInt(deviceId.substring(13));
+        		String volumeStart = "Harddisk" + hdIndex + "Partition";
+        		for (String volumeId : devices) {
+        			if (volumeId.startsWith(volumeStart)) {
+        				if (LCSystem.log.debug()) LCSystem.log.debug("Partition detected for " + deviceId + ": " + volumeId);
+        				int partitionIndex = Integer.parseInt(volumeId.substring(volumeStart.length()));
         				DiskPartition partition = new DiskPartition();
         				drive.partitions.add(partition);
         				partition.drive = drive;
-        				partition.index = partition_index;
-        				partition.OSID = volume_id;
+        				partition.index = partitionIndex;
+        				partition.OSID = volumeId;
         				buffer = new byte[2048];
-                        result = lib.QueryDosDeviceW(WindowsUtil.toUNICODE(volume_id), buffer, 2048);
+                        result = lib.QueryDosDeviceW(WindowsUtil.toUnicode(volumeId), buffer, 2048);
                         if (result != 0) {
                         	List<String> ss = WindowsUtil.toStrings(buffer);
                         	if (ss.size() == 1) {
-                        		partition.mountPoint = roots_names.get(ss.get(0));
-                        		if (LCSystem.log.debug()) LCSystem.log.debug(partition.mountPoint != null ? "Mount point found: "+partition.mountPoint.getAbsolutePath() : "No mount point for "+ss.get(0));
+                        		partition.mountPoint = rootsNames.get(ss.get(0));
+                        		if (LCSystem.log.debug())
+                        			LCSystem.log.debug(partition.mountPoint != null
+                        				? "Mount point found: " + partition.mountPoint.getAbsolutePath()
+                        				: "No mount point for " + ss.get(0));
                         	} else
-                        		if (LCSystem.log.error()) LCSystem.log.error("Unexpected response for "+volume_id+": "+ss.size()+" strings, 1 expected");
+                        		if (LCSystem.log.error())
+                        			LCSystem.log.error("Unexpected response for " + volumeId + ": "
+                        				+ ss.size() + " strings, 1 expected");
                         } else
-                        	if (LCSystem.log.error()) LCSystem.log.error("Error retrieving device name for "+volume_id+": "+Win32IOException.getLastError());
+                        	if (LCSystem.log.error())
+                        		LCSystem.log.error("Error retrieving device name for " + volumeId + ": "
+                        			+ Win32IOException.getLastError());
                         try {
                         	// TODO in parallel?
-	                        HANDLE h = openDevice(volume_id, false, false);
+	                        HANDLE h = openDevice(volumeId, false, false);
 	                		buffer = new byte[4096];
 	                		IntByReference nb = new IntByReference(0);
 	                        if (lib.DeviceIoControl(h, WindowsUtil.IOCTL_DISK_GET_PARTITION_INFO_EX, null, 0, buffer, buffer.length, nb, null)) {
-	                        	int style = DataUtil.readIntegerLittleEndian(buffer, 1);
 	                        	partition.start = DataUtil.readLongLittleEndian(buffer, 5);
 	                        	partition.size = DataUtil.readLongLittleEndian(buffer, 13);
 	                        	partition.partitionSlotIndex = DataUtil.readIntegerLittleEndian(buffer, 21);
+	                        	int style = DataUtil.readIntegerLittleEndian(buffer, 1);
 	                        	switch (style) {
 	                        	case 0: // MBR
-	                        		partition.type = (short)(buffer[0x20]&0xFF);
+	                        		partition.type = (short)(buffer[0x20] & 0xFF);
 	                        		partition.bootable = buffer[0x21] != 0;
 	                        		// recognized = buffer[0x22] != 0;
 	                        		// hidden sectors = IOUtil.readIntegerIntel(buffer, 0x23);
@@ -267,29 +290,36 @@ public class DrivesWin extends Drives {
 	                        com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
                         } catch (IOException e) {
                         	if (LCSystem.log.error())
-                        		LCSystem.log.error("Unable to open partition "+volume_id+" to get information", e);
+                        		LCSystem.log.error("Unable to open partition " + volumeId + " to get information", e);
                         }
         			}
         		}
-        	} else if (device_id.startsWith("CdRom")) {
+        	} else if (deviceId.startsWith("CdRom")) {
         		drive = new PhysicalDriveWin();
-        		drive.OSID = device_id;
+        		drive.osId = deviceId;
         		drive.type = PhysicalDrive.Type.CDROM;
         		DiskPartition partition = new DiskPartition();
         		partition.drive = drive;
         		drive.partitions.add(partition);
-        		if (LCSystem.log.debug()) LCSystem.log.debug("CD Drive detected: "+device_id);
+        		if (LCSystem.log.debug()) LCSystem.log.debug("CD Drive detected: " + deviceId);
 				buffer = new byte[2048];
-                result = lib.QueryDosDeviceW(WindowsUtil.toUNICODE(device_id), buffer, 2048);
+                result = lib.QueryDosDeviceW(WindowsUtil.toUnicode(deviceId), buffer, 2048);
                 if (result != 0) {
                 	List<String> ss = WindowsUtil.toStrings(buffer);
                 	if (ss.size() == 1) {
-                		partition.mountPoint = roots_names.get(ss.get(0));
-                		if (LCSystem.log.debug()) LCSystem.log.debug(partition.mountPoint != null ? "Mount point found: "+partition.mountPoint.getAbsolutePath() : "No mount point for "+ss.get(0));
+                		partition.mountPoint = rootsNames.get(ss.get(0));
+                		if (LCSystem.log.debug())
+                			LCSystem.log.debug(partition.mountPoint != null
+                				? "Mount point found: " + partition.mountPoint.getAbsolutePath()
+                				: "No mount point for " + ss.get(0));
                 	} else
-                		if (LCSystem.log.error()) LCSystem.log.error("Unexpected response for "+device_id+": "+ss.size()+" strings, 1 expected");
+                		if (LCSystem.log.error())
+                			LCSystem.log.error("Unexpected response for " + deviceId + ": "
+                				+ ss.size() + " strings, 1 expected");
                 } else
-                	if (LCSystem.log.error()) LCSystem.log.error("Error retrieving device name for "+device_id+": "+Win32IOException.getLastError());
+                	if (LCSystem.log.error())
+                		LCSystem.log.error("Error retrieving device name for " + deviceId + ": "
+                			+ Win32IOException.getLastError());
 
         	} else {
         		//System.out.println("Device ignored: " + device_id);
@@ -303,22 +333,25 @@ public class DrivesWin extends Drives {
         	// fill information about drive
         	// TODO make it in parallel
         	try {
-	    		HANDLE h = openDevice(device_id, false, false);
+	    		HANDLE h = openDevice(deviceId, false, false);
 	    		buffer = new byte[4096];
 	    		byte[] input = new byte[12];
 	    		IntByReference nb = new IntByReference(0);
-	    		boolean res = Kernel32.INSTANCE.DeviceIoControl(h, WindowsUtil.IOCTL_STORAGE_QUERY_PROPERTY, input, 12, buffer, 4096, nb, null);
+	    		boolean res = Kernel32.INSTANCE.DeviceIoControl(
+	    			h, WindowsUtil.IOCTL_STORAGE_QUERY_PROPERTY, input, 12, buffer, 4096, nb, null
+	    		);
 	    		if (res) {
 	        		drive.removable = buffer[10] != 0;
 	        		int off;
 	        		off = DataUtil.readIntegerLittleEndian(buffer, 12);
-	        		if (off > 0) drive.manufacturer = WindowsUtil.toStringASCII(buffer, off);
+	        		if (off > 0) drive.manufacturer = WindowsUtil.toStringAscii(buffer, off);
 	        		off = DataUtil.readIntegerLittleEndian(buffer, 16);
-	        		if (off > 0) drive.model = WindowsUtil.toStringASCII(buffer, off);
+	        		if (off > 0) drive.model = WindowsUtil.toStringAscii(buffer, off);
 	        		off = DataUtil.readIntegerLittleEndian(buffer, 20);
-	        		if (off > 0) drive.version = WindowsUtil.toStringASCII(buffer, off);
+	        		if (off > 0) drive.version = WindowsUtil.toStringAscii(buffer, off);
 	        		off = DataUtil.readIntegerLittleEndian(buffer, 24);
-	        		if (off > 0) drive.serial = WindowsUtil.toStringASCII(buffer, off);
+	        		if (off > 0) drive.serial = WindowsUtil.toStringAscii(buffer, off);
+	        		// skip checkstyle: OneStatementPerLine
 	        		switch (buffer[28]) {
 	        		case 0x01: drive.bus = InterfaceType.SCSI; break;
 	        		case 0x02: drive.bus = InterfaceType.ATAPI; break;
@@ -338,16 +371,17 @@ public class DrivesWin extends Drives {
 	        		default: drive.bus = InterfaceType.Unknown; break;
 	        		}
 	        		if (LCSystem.log.debug())
-	        			LCSystem.log.debug("Disk "+drive.OSID+" is: "+drive.manufacturer+" - "+drive.model + " - " + drive.serial + (drive.removable ? " (removable)" : " (fixed)") + " on " + drive.bus.toString());
+	        			LCSystem.log.debug("Disk " + drive.osId + " is: " + drive.manufacturer + " - "
+	        				+ drive.model + " - " + drive.serial + (drive.removable ? " (removable)" : " (fixed)")
+	        				+ " on " + drive.bus.toString());
 	    		}
 	    		com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
         	} catch (IOException e) {
         		if (LCSystem.log.error())
-        			LCSystem.log.error("Unable to open drive "+device_id+" to get information");
+        			LCSystem.log.error("Unable to open drive " + deviceId + " to get information");
         	}
-    		
-    		
-    		// fill partition information
+
+        	// fill partition information
         	try (IO stream = openReadOnly(drive, Task.PRIORITY_IMPORTANT)) {
 	    		List<DiskPartition> partitions = new ArrayList<DiskPartition>();
 	    		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
@@ -360,7 +394,7 @@ public class DrivesWin extends Drives {
 	    					dp.nbSectors = p.nbSectors;
 	    					dp.startCylinder = p.startCylinder;
 	    					dp.startHead = p.startHead;
-	    					dp.startSector = dp.startSector;
+	    					dp.startSector = p.startSector;
 	    					dp.endCylinder = p.endCylinder;
 	    					dp.endHead = p.endHead;
 	    					dp.endSector = p.endSector;
@@ -379,11 +413,11 @@ public class DrivesWin extends Drives {
         			break;
         		default:
             		if (LCSystem.log.error())
-            			LCSystem.log.error("Error reading partition table of drive "+drive.OSID, e);
+            			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);
         		}
         	} catch (IOException e) {
         		if (LCSystem.log.error())
-        			LCSystem.log.error("Error reading partition table of drive "+drive.OSID, e);
+        			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);
         	}
     		
     		drives.add(drive);
@@ -391,7 +425,7 @@ public class DrivesWin extends Drives {
         }
         
         // network drives
-        for (Map.Entry<String,File> e : roots_names.entrySet()) {
+        for (Map.Entry<String,File> e : rootsNames.entrySet()) {
         	String device = e.getKey();
         	if (device.startsWith("\\Device\\LanmanRedirector")) {
         		drives.add(new NetworkDriveWin(e.getValue()));
@@ -400,7 +434,7 @@ public class DrivesWin extends Drives {
         	}
         }
 
-        fillDrivesFromWMIC(drives);
+        fillDrivesFromWmic(drives);
 		checkSerial(drives);
 		if (progress != null) progress.progress(stepWMI);
 		
@@ -412,12 +446,18 @@ public class DrivesWin extends Drives {
         		if (d instanceof PhysicalDriveWin) {
 	        		for (Drive drive : drives) {
 	        			if (!(drive instanceof PhysicalDriveWin)) continue;
-	        			if (((PhysicalDriveWin)drive).OSID.equals(((PhysicalDriveWin)d).OSID)) { found = true; break; }
+	        			if (((PhysicalDriveWin)drive).osId.equals(((PhysicalDriveWin)d).osId)) {
+	        				found = true;
+	        				break;
+	        			}
 	        		}
         		} else if (d instanceof NetworkDriveWin) {
 	        		for (Drive drive : drives) {
 	        			if (!(drive instanceof NetworkDriveWin)) continue;
-	        			if (((NetworkDriveWin)drive).getDriveLetter().equals(((NetworkDriveWin)d).getDriveLetter())) { found = true; break; }
+	        			if (((NetworkDriveWin)drive).getDriveLetter().equals(((NetworkDriveWin)d).getDriveLetter())) {
+	        				found = true;
+	        				break;
+	        			}
 	        		}
         		}
         		if (!found) {
@@ -434,7 +474,10 @@ public class DrivesWin extends Drives {
 		        	boolean found = false;
 		        	for (Drive d : this.drives) {
 		        		if (!(d instanceof PhysicalDriveWin)) continue;
-		        		if (((PhysicalDriveWin)d).OSID.equals(((PhysicalDriveWin)drive).OSID)) { found = true; break; }
+		        		if (((PhysicalDriveWin)d).osId.equals(((PhysicalDriveWin)drive).osId)) {
+		        			found = true;
+		        			break;
+		        		}
 		        	}
 		        	if (!found) {
 			        	this.drives.add(drive);
@@ -452,7 +495,10 @@ public class DrivesWin extends Drives {
 		        	boolean found = false;
 	        		for (Drive d : this.drives) {
 		        		if (!(d instanceof NetworkDriveWin)) continue;
-		        		if (((NetworkDriveWin)d).getDriveLetter().equals(((NetworkDriveWin)drive).getDriveLetter())) { found = true; break; }
+		        		if (((NetworkDriveWin)d).getDriveLetter().equals(((NetworkDriveWin)drive).getDriveLetter())) {
+		        			found = true;
+		        			break;
+		        		}
 		        	}
 	        		if (!found) {
 			        	this.drives.add(drive);
@@ -466,8 +512,11 @@ public class DrivesWin extends Drives {
         }
 	}
 	
-	private static void fillDrivesFromWMIC(List<Drive> drives) {
-		List<Map<String,String>> list = WMI.instance().query("Win32_DiskDrive", null, "BytesPerSector", "DeviceID", "SectorsPerTrack", "Size", "TotalCylinders", "TracksPerCylinder","PNPDeviceID", "Manufacturer", "SerialNumber", "Model", "InterfaceType");
+	private static void fillDrivesFromWmic(List<Drive> drives) {
+		List<Map<String,String>> list = WMI.instance().query(
+			"Win32_DiskDrive", null, "BytesPerSector", "DeviceID", "SectorsPerTrack", "Size", "TotalCylinders",
+			"TracksPerCylinder","PNPDeviceID", "Manufacturer", "SerialNumber", "Model", "InterfaceType"
+		);
 		for (Map<String,String> map : list) {
 			String id = map.get("DeviceID");
 			if (id == null) continue;
@@ -475,25 +524,33 @@ public class DrivesWin extends Drives {
 			PhysicalDriveWin drive = null;
 			for (Drive d : drives) {
 				if (!(d instanceof PhysicalDriveWin)) continue;
-				if (id.equals("\\\\.\\"+((PhysicalDriveWin)d).OSID.toLowerCase())) {
+				if (id.equals("\\\\.\\" + ((PhysicalDriveWin)d).osId.toLowerCase())) {
 					drive = (PhysicalDriveWin)d;
 					break;
 				}
 			}
 			if (drive == null) continue;
-			try { drive.bytes_per_sector = Integer.parseInt(map.get("BytesPerSector")); } catch (Throwable t) {}
-			try { drive.sectors_per_track = Integer.parseInt(map.get("SectorsPerTrack")); } catch (Throwable t) {}
-			try { drive.tracks_per_cylinder = Integer.parseInt(map.get("TrackPerCylinder")); } catch (Throwable t) {}
-			try { drive.cylinders = Integer.parseInt(map.get("TotalCylinders")); } catch (Throwable t) {}
-			try { drive.size = new BigInteger(map.get("Size")); } catch (Throwable t) {}
+			try { drive.bytesPerSector = Integer.parseInt(map.get("BytesPerSector")); }
+			catch (Throwable t) { /* ignore */ }
+			try { drive.sectorsPerTrack = Integer.parseInt(map.get("SectorsPerTrack")); }
+			catch (Throwable t) { /* ignore */ }
+			try { drive.tracksPerCylinder = Integer.parseInt(map.get("TrackPerCylinder")); }
+			catch (Throwable t) { /* ignore */ }
+			try { drive.cylinders = Integer.parseInt(map.get("TotalCylinders")); }
+			catch (Throwable t) { /* ignore */ }
+			try { drive.size = new BigInteger(map.get("Size")); }
+			catch (Throwable t) { /* ignore */ }
 			drive.infos = new HashMap<String,Object>(1);
 			drive.infos.put("pnp", map.get("PNPDeviceID"));
 			if (drive.manufacturer == null)
-				try { drive.manufacturer = map.get("Manufacturer"); } catch (Throwable t) {}
+				try { drive.manufacturer = map.get("Manufacturer"); }
+				catch (Throwable t) { /* ignore */ }
 			if (drive.model == null)
-				try { drive.model = map.get("Model"); } catch (Throwable t) {}
+				try { drive.model = map.get("Model"); }
+				catch (Throwable t) { /* ignore */ }
 			if (drive.serial == null)
-				try { drive.serial = map.get("SerialNumber"); } catch (Throwable t) {}
+				try { drive.serial = map.get("SerialNumber"); }
+				catch (Throwable t) { /* ignore */ }
 			if (drive.bus == null) {
 				try {
 					String bus = map.get("InterfaceType");
@@ -505,7 +562,7 @@ public class DrivesWin extends Drives {
 					case "hdc": break; // ???
 					default: // ???
 					}
-				} catch (Throwable t) {}
+				} catch (Throwable t) { /* ignore */ }
 			}
 		}
 		list = WMI.instance().query("Win32_CDROMDrive", null, "Size", "DeviceID", "PNPDeviceID", "Manufacturer", "SerialNumber");
@@ -514,20 +571,23 @@ public class DrivesWin extends Drives {
 			PhysicalDriveWin drive = null;
 			for (Drive d : drives) {
 				if (!(d instanceof PhysicalDriveWin)) continue;
-				if (((PhysicalDriveWin)d).OSID.equals("CdRom"+index)) {
+				if (((PhysicalDriveWin)d).osId.equals("CdRom" + index)) {
 					drive = (PhysicalDriveWin)d;
 					break;
 				}
 			}
 			index++;
 			if (drive == null) continue;
-			try { drive.size = new BigInteger(map.get("Size")); } catch (Throwable t) {}
+			try { drive.size = new BigInteger(map.get("Size")); }
+			catch (Throwable t) { /* ignore */ }
 			drive.infos = new HashMap<String,Object>(1);
 			drive.infos.put("pnp", map.get("PNPDeviceID"));
 			if (drive.manufacturer == null)
-				try { drive.manufacturer = map.get("Manufacturer"); } catch (Throwable t) {}
+				try { drive.manufacturer = map.get("Manufacturer"); }
+				catch (Throwable t) { /* ignore */ }
 			if (drive.serial == null)
-				try { drive.serial = map.get("SerialNumber"); } catch (Throwable t) {}
+				try { drive.serial = map.get("SerialNumber"); }
+				catch (Throwable t) { /* ignore */ }
 		}
 
 		list = WMI.instance().query("Win32_LogicalDisk", null, "DeviceID", "FileSystem", "VolumeName", "VolumeSerialNumber", "DriveType");
@@ -550,6 +610,7 @@ public class DrivesWin extends Drives {
 					}
 				}
 			} else if (drive instanceof NetworkDriveWin) {
+				// nothing
 			}
 		}
 		// add network drives if not yet detected
@@ -589,12 +650,12 @@ public class DrivesWin extends Drives {
 				if (pnp.startsWith("USBSTOR")) {
 					int i = pnp.lastIndexOf('\\');
 					if (i > 0) {
-						String[] parts = pnp.substring(i+1).split("&");
+						String[] parts = pnp.substring(i + 1).split("&");
 						if (parts.length > 1) {
-							drive.serial = parts[parts.length-2];
+							drive.serial = parts[parts.length - 2];
 							i = drive.serial.indexOf('_');
 							if (i >= 0) {
-								int j = i+1;
+								int j = i + 1;
 								while (j < drive.serial.length() && drive.serial.charAt(j) == '_') j++;
 								if (j == drive.serial.length())
 									drive.serial = drive.serial.substring(0,i);

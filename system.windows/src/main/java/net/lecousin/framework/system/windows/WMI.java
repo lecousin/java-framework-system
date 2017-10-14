@@ -11,18 +11,25 @@ import com.jacob.com.Dispatch;
 import com.jacob.com.EnumVariant;
 import com.jacob.com.Variant;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
 import net.lecousin.framework.exception.NoException;
 import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.util.Triple;
 
+/**
+ * Access to Windows Management Instrumentation.
+ */
 public class WMI extends Thread implements Closeable {
 
 	private WMI() {
 		super("LCSystem - Win32 - WMI ActiveX Component");
 	}
+	
 	private static WMI instance;
+	
+	/** Return the instance or create it. */
 	public static synchronized WMI instance() {
 		if (instance == null) {
 			instance = new WMI();
@@ -32,9 +39,11 @@ public class WMI extends Thread implements Closeable {
 		return instance;
 	}
 
-	private ActiveXComponent wmi, wmiconnect;
+	private ActiveXComponent wmi;
+	private ActiveXComponent wmiconnect;
 	private boolean quit = false;
-	private LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>> queries = new LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>>();
+	private LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>>
+		queries = new LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>>();
 	
 	@Override
 	public void close() {
@@ -44,6 +53,8 @@ public class WMI extends Thread implements Closeable {
 		}
 	}
 	
+	// skip checkstyle: LocalVariableName
+	@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 	@Override
 	public void run() {
 		wmi = new ActiveXComponent("WbemScripting.SWbemLocator");
@@ -57,13 +68,12 @@ public class WMI extends Thread implements Closeable {
 			Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>> p;
 			synchronized (queries) {
 				if (queries.isEmpty())
-					try { queries.wait(); } catch (InterruptedException e) { break; }
+					try { queries.wait(); }
+					catch (InterruptedException e) { break; }
 				if (quit) break;
 				p = queries.removeFirst();
 			}
 			Triple<String,String,String[]> t = p.getValue1();
-			String className = t.getValue1();
-			String where = t.getValue2();
 			String[] fields = t.getValue3();
 			StringBuilder q = new StringBuilder();
 			q.append("select ");
@@ -71,10 +81,13 @@ public class WMI extends Thread implements Closeable {
 				if (i > 0) q.append(',');
 				q.append(fields[i]);
 			}
+			String className = t.getValue1();
+			String where = t.getValue2();
 			q.append(" from ").append(className);
 			if (where != null) q.append(" where ").append(where);
 			List<Map<String,String>> list = null;
-			Variant vCollection = null, vQ = null;
+			Variant vCollection = null;
+			Variant vQ = null;
 			EnumVariant enumVariant = null;
 			Dispatch vColD = null;
 			try {
@@ -99,7 +112,7 @@ public class WMI extends Thread implements Closeable {
 				}
 			} catch (Throwable th) {
 				if (LCSystem.log.error())
-					LCSystem.log.error("WMI call failed for query: "+q.toString(), th);
+					LCSystem.log.error("WMI call failed for query: " + q.toString(), th);
 			} finally {
 				if (enumVariant != null)
 					enumVariant.safeRelease();
@@ -122,10 +135,13 @@ public class WMI extends Thread implements Closeable {
 		wmi = null;
 		instance = null;
 	}
+	
+	/** Query. */
 	public List<Map<String,String>> query(String className, String where, String... fields) {
 		Triple<String,String,String[]> t = new Triple<String,String,String[]>(className, where, fields);
 		SynchronizationPoint<NoException> sp = new SynchronizationPoint<NoException>();
-		Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>> p = new Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>(t, null, sp);
+		Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>> 
+			p = new Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>(t, null, sp);
 		List<Map<String,String>> list;
 		synchronized (queries) {
 			queries.add(p);

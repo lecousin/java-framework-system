@@ -11,6 +11,10 @@ import net.lecousin.framework.system.software.Processes;
 import net.lecousin.framework.system.windows.jna.Kernel32;
 import net.lecousin.framework.system.windows.jna.Psapi;
 
+/**
+ * Implementation of Processes for Windows.
+ *
+ */
 public class ProcessesWin extends Processes {
 
 	@Override
@@ -20,13 +24,13 @@ public class ProcessesWin extends Processes {
 	
 	@Override
 	public List<Integer> listProcessesIds() {
-		byte[] buf = new byte[4096*4];
+		byte[] buf = new byte[4096 * 4];
 		IntByReference size = new IntByReference();
 		if (!Psapi.INSTANCE.EnumProcesses(buf, buf.length, size)) return null;
-		int nb = size.getValue()/4;
+		int nb = size.getValue() / 4;
 		List<Integer> list = new ArrayList<Integer>(nb);
 		for (int i = 0; i < nb; ++i)
-			list.add(new Integer(DataUtil.readIntegerLittleEndian(buf, i*4)));
+			list.add(Integer.valueOf(DataUtil.readIntegerLittleEndian(buf, i * 4)));
 		return list;
 	}
 	
@@ -42,7 +46,7 @@ public class ProcessesWin extends Processes {
 		com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
 		if (!res) return -1;
 		// times are in 100-nanoseconds units, so we multiply it by 100 to get an approximation of nanoseconds
-		return (DataUtil.readLongLittleEndian(kernel, 0) + DataUtil.readLongLittleEndian(user, 0))*100;
+		return (DataUtil.readLongLittleEndian(kernel, 0) + DataUtil.readLongLittleEndian(user, 0)) * 100;
 	}
 	
 	@Override

@@ -5,31 +5,40 @@ import java.io.IOException;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
+/**
+ * Create an IOException from a Win32 error code.
+ */
 public class Win32IOException extends IOException {
 
 	private static final long serialVersionUID = -2678633604379315330L;
 
-	public static void throw_last_error(HANDLE... h) throws Win32IOException {
+	/** Create and throw an IOException from the last error that occured on the given handles. */
+	public static void throwLastError(HANDLE... h) throws Win32IOException {
 		int err = Native.getLastError();
 		if (h != null) {
 			for (int i = 0; i < h.length; ++i)
 				com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h[i]);
 		}
-		throw new Win32IOException(err, "Error #"+err+": "+getErrorMessage(err));
+		throw new Win32IOException(err, "Error #" + err + ": " + getErrorMessage(err));
 	}
 	
+	/** Constructor. */
 	public Win32IOException(int errorNum, String message) {
 		super(message);
 		this.errorNum = errorNum;
 	}
+	
 	private int errorNum;
+	
 	public int getErrorNumber() { return errorNum; }
 	
+	/** Return an error message from the last error. */
 	public static String getLastError() {
 		int err = Native.getLastError();
-		return "Error #"+err+": "+getErrorMessage(err);
+		return "Error #" + err + ": " + getErrorMessage(err);
 	}
 
+	/** Create an error message from a Win32 error code. */
 	public static String getErrorMessage(int err) {
 		switch (err) {
 		case 1: return "Invalid function";

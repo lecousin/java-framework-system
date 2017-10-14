@@ -11,7 +11,17 @@ import net.lecousin.framework.system.LCSystem;
  */
 public abstract class Processes {
 
-	public static Processes instance = null;
+	private static Processes instance = null;
+	
+	public static Processes getInstance() { return instance; }
+	
+	/** Set the implementation. */
+	public static void setInstance(Processes processes) throws IllegalStateException {
+		synchronized (Processes.class) {
+			if (instance != null) throw new IllegalStateException();
+			instance = processes;
+		}
+	}
 
 	/** Return the id of the current process. */
 	public abstract int getCurrentProcessId();

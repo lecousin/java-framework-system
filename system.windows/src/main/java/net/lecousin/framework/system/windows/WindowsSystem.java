@@ -23,14 +23,22 @@ import com.sun.jna.platform.win32.Wtsapi32;
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.system.windows.jna.User32;
 
+// skip checkstyle: ParameterName
+// skip checkstyle: LocalVariableName
+/**
+ * Utilities for Windows system.
+ */
 public class WindowsSystem {
 
+	/** Listener of Windows events. */
 	public static interface WindowsListener {
-		public void fire(int event_id, WPARAM uParam, LPARAM lParam);
+		/** Called when Windows raises an event. */
+		public void fire(int eventId, WPARAM uParam, LPARAM lParam);
 	}
 	
-	public static void addSystemEventListener(int event_id, WindowsListener listener) {
-		Integer i = new Integer(event_id);
+	/** Add a listener for a specific event. */
+	public static void addSystemEventListener(int eventId, WindowsListener listener) {
+		Integer i = Integer.valueOf(eventId);
 		synchronized (listeners) {
 			List<WindowsListener> list = listeners.get(i);
 			if (list == null) {
@@ -59,7 +67,7 @@ public class WindowsSystem {
 	        default:
 			}
 			synchronized (listeners) {
-				List<WindowsListener> list = listeners.get(new Integer(uMsg));
+				List<WindowsListener> list = listeners.get(Integer.valueOf(uMsg));
 				if (list != null) {
 					for (WindowsListener listener : list)
 						listener.fire(uMsg, uParam, lParam);

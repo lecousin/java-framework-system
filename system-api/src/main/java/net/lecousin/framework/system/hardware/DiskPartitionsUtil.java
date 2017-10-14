@@ -43,12 +43,12 @@ public class DiskPartitionsUtil {
 				p.startCylinder = (b[i * 16 + 3] & 0xFF) | ((b[i * 16 + 2] & 0xC0) << 2);
 				p.type = (short)(b[i * 16 + 4] & 0xFF);
 				if (p.type == 0) continue;
-				if (p.type == 0xEE) ;// TODO return readGUIDTable();
+				//if (p.type == 0xEE) ;// TODO return readGUIDTable();
 				p.endHead = (short)(b[i * 16 + 5] & 0xFF);
 				p.endSector = (short)(b[i * 16 + 6] & 0x3F);
 				p.endCylinder = (b[i * 16 + 7] & 0xFF) | ((b[i * 16 + 6] & 0xC0) << 2);
-				p.lba = DataUtil.readIntegerLittleEndian(b, i * 16 + 8) & 0xFFFFFFFF;
-				p.nbSectors = DataUtil.readIntegerLittleEndian(b, i * 16 + 12) & 0xFFFFFFFF;
+				p.lba = DataUtil.readIntegerLittleEndian(b, i * 16 + 8) & 0xFFFFFFFFL;
+				p.nbSectors = DataUtil.readIntegerLittleEndian(b, i * 16 + 12) & 0xFFFFFFFFL;
 				if (p.lba == 0) {
 					if (LCSystem.log.error()) LCSystem.log.error("Cannot determine partition position for index " + (i + 1));
 					continue;

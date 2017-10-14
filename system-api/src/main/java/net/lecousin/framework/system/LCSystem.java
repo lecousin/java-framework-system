@@ -8,7 +8,7 @@ import net.lecousin.framework.log.Logger;
  */
 public class LCSystem {
 
-	public static Logger log;
+	public static final Logger log;
 	
 	static {
 		log = LCCore.get().getSystemLogger("system");
