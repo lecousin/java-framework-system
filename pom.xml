@@ -2,13 +2,15 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.lecousin.framework.system</groupId>
   <artifactId>parent-pom</artifactId>
-  <version>0.2</version>
+  <version>0.2.0</version>
   <packaging>pom</packaging>
+  
   <parent>
   	<groupId>net.lecousin</groupId>
   	<artifactId>parent-pom</artifactId>
   	<version>0.3</version>
   </parent>
+  
   <modules>
     <module>system-api</module>
     <module>system-impl</module>
