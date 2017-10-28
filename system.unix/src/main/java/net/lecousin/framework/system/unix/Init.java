@@ -5,6 +5,7 @@ import com.sun.jna.Platform;
 
 import net.lecousin.framework.plugins.CustomExtensionPoint;
 import net.lecousin.framework.system.hardware.Drives;
+import net.lecousin.framework.system.unix.hardware.DrivesMac;
 import net.lecousin.framework.system.unix.hardware.DrivesUnixUdev;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.linux.Udev;
@@ -18,7 +19,7 @@ public class Init implements CustomExtensionPoint {
 			try {
 				RunLoopThread.init();
 				JnaInstances.diskArbitration = Native.loadLibrary("DiskArbitration", DiskArbitration.class);
-				// TODO
+				Drives.setInstance(new DrivesMac());
 			} catch (Throwable t) {
 			}
 		} else {

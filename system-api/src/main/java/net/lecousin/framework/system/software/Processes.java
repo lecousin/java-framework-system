@@ -58,7 +58,7 @@ public abstract class Processes {
 						System.arraycopy(usageLast10Minutes, 1, usageLast10Minutes, 0, 9);
 						usageLast10Minutes[9] = usage;
 					}
-					// TODO
+					// TODO make the information available, not just logging
 					return null;
 				}
 			};
