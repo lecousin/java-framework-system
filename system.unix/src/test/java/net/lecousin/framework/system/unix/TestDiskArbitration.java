@@ -102,18 +102,13 @@ public class TestDiskArbitration {
 		JnaInstances.coreFoundation.CFRelease(session);
 	}
 	
-	private static final CFStringRef strDADeviceModel = CFStringRef.toCFString("DADeviceModel");
-    private static final CFStringRef strDAMediaSize = CFStringRef.toCFString("DAMediaSize");
-    private static final CFStringRef strModel = CFStringRef.toCFString("Model");
-    private static final CFStringRef strIOPropertyMatch = CFStringRef.toCFString("IOPropertyMatch");
-
 	private static void showDiskInfo(DADiskRef disk) {
 		DiskArbitration da = JnaInstances.diskArbitration;
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo != null) {
-			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
+			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString("DADeviceModel"));
 			String model = CoreFoundation.Util.cfPointerToString(modelPtr);
-			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaSize);
+			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString("DAMediaSize"));
 			long size = sizePtr == null ? -1 : CoreFoundation.Util.cfPointerToLong(sizePtr);
 
 			// Use the model as a key to get serial from IOKit
@@ -121,9 +116,9 @@ public class TestDiskArbitration {
 			if (!"Disk Image".equals(model)) {
 				CFStringRef modelNameRef = CFStringRef.toCFString(model);
 				CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
-				JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
+				JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, CFStringRef.toCFString("Model"), modelNameRef);
 				CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
-				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
+				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, CFStringRef.toCFString("IOPropertyMatch"), propertyDict);
 
 				// search for all IOservices that match the model
 				IntByReference serviceIterator = new IntByReference();

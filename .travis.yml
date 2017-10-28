@@ -1,9 +1,5 @@
 language: java
 
-os:
-  - linux
-  - osx
-
 script: mvn test verify -B
 
 after_script:
