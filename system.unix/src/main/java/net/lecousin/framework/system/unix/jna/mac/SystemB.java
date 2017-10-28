@@ -3,13 +3,10 @@ package net.lecousin.framework.system.unix.jna.mac;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sun.jna.Native;
 import com.sun.jna.Structure;
 
-public interface SystemB extends com.sun.jna.platform.mac.SystemB {
+public interface SystemB {
 	
-	public static SystemB INSTANCE = Native.loadLibrary("System", SystemB.class);
-
     // params.h
     public static int MAXPATHLEN = 1024;
 	

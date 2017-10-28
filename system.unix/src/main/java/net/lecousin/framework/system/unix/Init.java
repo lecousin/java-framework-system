@@ -9,8 +9,11 @@ import net.lecousin.framework.system.unix.hardware.DrivesMac;
 import net.lecousin.framework.system.unix.hardware.DrivesUnixUdev;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.linux.Udev;
+import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
+import net.lecousin.framework.system.unix.jna.mac.IOKit;
 import net.lecousin.framework.system.unix.jna.mac.RunLoopThread;
+import net.lecousin.framework.system.unix.jna.mac.SystemB;
 
 public class Init implements CustomExtensionPoint {
 
@@ -19,6 +22,10 @@ public class Init implements CustomExtensionPoint {
 			try {
 				RunLoopThread.init();
 				JnaInstances.diskArbitration = Native.loadLibrary("DiskArbitration", DiskArbitration.class);
+				JnaInstances.coreFoundation = Native.loadLibrary("CoreFoundation", CoreFoundation.class);
+				JnaInstances.ALLOCATOR = JnaInstances.coreFoundation.CFAllocatorGetDefault();
+				JnaInstances.ioKit = Native.loadLibrary("IOKit", IOKit.class);
+				JnaInstances.systemB = Native.loadLibrary("System", SystemB.class);
 				Drives.setInstance(new DrivesMac());
 			} catch (Throwable t) {
 			}

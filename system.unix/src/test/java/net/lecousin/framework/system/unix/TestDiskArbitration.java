@@ -27,9 +27,9 @@ public class TestDiskArbitration {
 	public static void main(String[] args) {
 		new Init();
 		
-        int numfs = SystemB.INSTANCE.getfsstat64(null, 0, 0);
+        int numfs = JnaInstances.systemB.getfsstat64(null, 0, 0);
         Statfs[] fs = new Statfs[numfs];
-        SystemB.INSTANCE.getfsstat64(fs, numfs * new Statfs().size(), SystemB.MNT_NOWAIT);
+        JnaInstances.systemB.getfsstat64(fs, numfs * new Statfs().size(), SystemB.MNT_NOWAIT);
         for (Statfs f : fs) {
             String mntFrom = new String(f.f_mntfromname).trim();
             String mntPath = new String(f.f_mntonname).trim();
@@ -39,29 +39,29 @@ public class TestDiskArbitration {
 		
 		DiskArbitration da = JnaInstances.diskArbitration;
 		
-		DASessionRef session = da.DASessionCreate(CoreFoundation.ALLOCATOR);
+		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
 		
         List<String> bsdNames = new ArrayList<>();
         IntByReference iter = new IntByReference();
         IOKit.Util.getMatchingServices("IOMedia", iter);
-        int media = IOKit.INSTANCE.IOIteratorNext(iter.getValue());
+        int media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
         while (media != 0) {
             //if (IOKit.Util.getIORegistryBooleanProperty(media, "Whole")) {
-                DADiskRef disk = da.DADiskCreateFromIOMedia(CoreFoundation.ALLOCATOR, session, media);
+                DADiskRef disk = da.DADiskCreateFromIOMedia(JnaInstances.ALLOCATOR, session, media);
                 String name = da.DADiskGetBSDName(disk);
                 System.out.println("BSD Name: " + name);
                 bsdNames.add(name);
             //}
-            IOKit.INSTANCE.IOObjectRelease(media);
-            media = IOKit.INSTANCE.IOIteratorNext(iter.getValue());
+            JnaInstances.ioKit.IOObjectRelease(media);
+            media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
         }
 
         
 		for (String name : bsdNames) {
-			DADiskRef disk = da.DADiskCreateFromBSDName(CoreFoundation.ALLOCATOR, session, "/dev/" + name);
+			DADiskRef disk = da.DADiskCreateFromBSDName(JnaInstances.ALLOCATOR, session, "/dev/" + name);
 			if (disk != null) {
 				showDiskInfo(disk);
-				CoreFoundation.INSTANCE.CFRelease(disk);
+				JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}
 		
@@ -72,7 +72,7 @@ public class TestDiskArbitration {
 			public void callback(DADiskRef disk, Pointer context) {
 				System.out.println("Disk appeared");
 				showDiskInfo(disk);
-				//CoreFoundation.INSTANCE.CFRelease(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}, null);
 		da.DARegisterDiskDescriptionChangedCallback(session, null, null, new DADiskDescriptionChangedCallback() {
@@ -80,7 +80,7 @@ public class TestDiskArbitration {
 			public void callback(DADiskRef disk, CFArrayRef keys, Pointer context) {
 				System.out.println("Disk changed");
 				showDiskInfo(disk);
-				//CoreFoundation.INSTANCE.CFRelease(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}, null);
 		da.DARegisterDiskDisappearedCallback(session, null, new DADiskDisappearedCallback() {
@@ -88,18 +88,18 @@ public class TestDiskArbitration {
 			public void callback(DADiskRef disk, Pointer context) {
 				System.out.println("Disk disappeared");
 				showDiskInfo(disk);
-				//CoreFoundation.INSTANCE.CFRelease(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}, null);
 		
-		da.DASessionScheduleWithRunLoop(session, CoreFoundation.INSTANCE.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
+		da.DASessionScheduleWithRunLoop(session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
 		
 		try { Thread.sleep(10 * 60 * 1000); }
 		catch (InterruptedException e) {}
 		
 		System.out.println("Close session");
 		
-		CoreFoundation.INSTANCE.CFRelease(session);
+		JnaInstances.coreFoundation.CFRelease(session);
 	}
 	
 	private static final CFStringRef strDADeviceModel = CFStringRef.toCFString("DADeviceModel");
@@ -111,37 +111,37 @@ public class TestDiskArbitration {
 		DiskArbitration da = JnaInstances.diskArbitration;
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo != null) {
-			Pointer modelPtr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDADeviceModel);
+			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
 			String model = CoreFoundation.Util.cfPointerToString(modelPtr);
-			Pointer sizePtr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAMediaSize);
+			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaSize);
 			long size = sizePtr == null ? -1 : CoreFoundation.Util.cfPointerToLong(sizePtr);
 
 			// Use the model as a key to get serial from IOKit
 			String serial = null;
 			if (!"Disk Image".equals(model)) {
 				CFStringRef modelNameRef = CFStringRef.toCFString(model);
-				CFMutableDictionaryRef propertyDict = CoreFoundation.INSTANCE	.CFDictionaryCreateMutable(CoreFoundation.ALLOCATOR, 0, null, null);
-				CoreFoundation.INSTANCE.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
-				CFMutableDictionaryRef matchingDict = CoreFoundation.INSTANCE	.CFDictionaryCreateMutable(CoreFoundation.ALLOCATOR, 0, null, null);
-				CoreFoundation.INSTANCE.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
+				CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
+				JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
+				CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
+				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
 
 				// search for all IOservices that match the model
 				IntByReference serviceIterator = new IntByReference();
 				IOKit.Util.getMatchingServices(matchingDict, serviceIterator);
 				// getMatchingServices releases matchingDict
-				CoreFoundation.INSTANCE.CFRelease(modelNameRef);
-				CoreFoundation.INSTANCE.CFRelease(propertyDict);
-				int sdService = IOKit.INSTANCE.IOIteratorNext(serviceIterator.getValue());
+				JnaInstances.coreFoundation.CFRelease(modelNameRef);
+				JnaInstances.coreFoundation.CFRelease(propertyDict);
+				int sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
 				while (sdService != 0) {
 					// look up the serial number
 					serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
-					IOKit.INSTANCE.IOObjectRelease(sdService);
+					JnaInstances.ioKit.IOObjectRelease(sdService);
 					if (serial != null)
 						break;
 					// iterate
-					sdService = IOKit.INSTANCE.IOIteratorNext(serviceIterator.getValue());
+					sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
 				}
-				IOKit.INSTANCE.IOObjectRelease(serviceIterator.getValue());
+				JnaInstances.ioKit.IOObjectRelease(serviceIterator.getValue());
 			}
 
 			System.out.println("Disk: " + model + " - " + serial + " - " + size);
@@ -174,7 +174,7 @@ public class TestDiskArbitration {
 			printProperty(diskInfo, "DAVolumeMountable", PropType.BOOLEAN);
 			printProperty(diskInfo, "DAVolumeNetwork", PropType.BOOLEAN);
 
-			CoreFoundation.INSTANCE.CFRelease(diskInfo);
+			JnaInstances.coreFoundation.CFRelease(diskInfo);
 		}
 
 	}
@@ -186,7 +186,7 @@ public class TestDiskArbitration {
 	}
 	
 	private static void printProperty(CFDictionaryRef diskInfo, String propertyName, PropType type) {
-		Pointer ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString(propertyName));
+		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString(propertyName));
 		System.out.print("** " + propertyName);
 		if (ptr == null) {
 			System.out.println("    > NULL");

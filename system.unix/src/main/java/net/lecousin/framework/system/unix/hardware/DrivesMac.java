@@ -98,30 +98,30 @@ public class DrivesMac extends Drives {
 	@SuppressWarnings("resource")
 	private void initDrives(WorkProgress progress) {
 		DiskArbitration da = JnaInstances.diskArbitration;
-		DASessionRef session = da.DASessionCreate(CoreFoundation.ALLOCATOR);
+		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
 		
         List<String> bsdNames = new ArrayList<>();
         IntByReference iter = new IntByReference();
         IOKit.Util.getMatchingServices("IOMedia", iter);
-        int media = IOKit.INSTANCE.IOIteratorNext(iter.getValue());
+        int media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
         while (media != 0) {
         	//if (IOKit.Util.getIORegistryBooleanProperty(media, "Whole")) {
-        	DADiskRef disk = da.DADiskCreateFromIOMedia(CoreFoundation.ALLOCATOR, session, media);
+        	DADiskRef disk = da.DADiskCreateFromIOMedia(JnaInstances.ALLOCATOR, session, media);
         	String name = da.DADiskGetBSDName(disk);
         	System.out.println("BSD Name: " + name);
         	bsdNames.add(name);
         	//}
-        	IOKit.INSTANCE.IOObjectRelease(media);
-        	media = IOKit.INSTANCE.IOIteratorNext(iter.getValue());
+        	JnaInstances.ioKit.IOObjectRelease(media);
+        	media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
         }
 		
         Mutable<List<Pair<String, String>>> bsdNamesMountPoints = new Mutable<>(null);
         Mutable<List<DiskImageInfo>> diskImages = new Mutable<>(null);
 		for (String name : bsdNames) {
-			DADiskRef disk = da.DADiskCreateFromBSDName(CoreFoundation.ALLOCATOR, session, "/dev/" + name);
+			DADiskRef disk = da.DADiskCreateFromBSDName(JnaInstances.ALLOCATOR, session, "/dev/" + name);
 			if (disk != null) {
 				newDisk(disk, bsdNamesMountPoints, diskImages);
-				CoreFoundation.INSTANCE.CFRelease(disk);
+				JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}
 		bsdNamesMountPoints = null;
@@ -146,12 +146,12 @@ public class DrivesMac extends Drives {
 			}
 		}, null);
 		
-		da.DASessionScheduleWithRunLoop(session, CoreFoundation.INSTANCE.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
+		da.DASessionScheduleWithRunLoop(session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
 		
 		LCCore.get().toClose(new Closeable() {
 			@Override
 			public void close() {
-				CoreFoundation.INSTANCE.CFRelease(session);
+				JnaInstances.coreFoundation.CFRelease(session);
 			}
 		});
 	}
@@ -200,9 +200,9 @@ public class DrivesMac extends Drives {
 	}
 	
 	private static List<Pair<String, String>> getMountPoints() {
-        int numfs = SystemB.INSTANCE.getfsstat64(null, 0, 0);
+        int numfs = JnaInstances.systemB.getfsstat64(null, 0, 0);
         Statfs[] fs = new Statfs[numfs];
-        SystemB.INSTANCE.getfsstat64(fs, numfs * new Statfs().size(), SystemB.MNT_NOWAIT);
+        JnaInstances.systemB.getfsstat64(fs, numfs * new Statfs().size(), SystemB.MNT_NOWAIT);
         List<Pair<String, String>> list = new ArrayList<>(numfs);
         for (Statfs f : fs) {
             String mntFrom = new String(f.f_mntfromname).trim();
@@ -240,15 +240,15 @@ public class DrivesMac extends Drives {
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo == null) return;
 		
-		Pointer ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDADeviceModel);
+		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
 		String model = CoreFoundation.Util.cfPointerToString(ptr);
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAMediaSize);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaSize);
 		long size = ptr == null ? -1 : CoreFoundation.Util.cfPointerToLong(ptr);
 
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
 		String bsdName = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAMediaWhole);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaWhole);
 		if (ptr != null && CoreFoundation.Util.cfPointerToBoolean(ptr)) {
 			if ("Disk Image".equals(model)) {
 				newDiskImage(bsdName, bsdNamesMountPoints, diskImages);
@@ -258,40 +258,40 @@ public class DrivesMac extends Drives {
 			drive.devpath = bsdName;
 			drive.model = model;
 			drive.size = BigInteger.valueOf(size);
-			ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDABusPath);
+			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
 			drive.OSID = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
-			ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDADeviceVendor);
+			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceVendor);
 			drive.manufacturer = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
-			ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAMediaRemovable);
+			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaRemovable);
 			drive.removable = ptr == null ? false : CoreFoundation.Util.cfPointerToBoolean(ptr);
-			ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDADeviceRevision);
+			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceRevision);
 			drive.version = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 			drive.itype = InterfaceType.Unknown; // TODO
 			
 			CFStringRef modelNameRef = CFStringRef.toCFString(model);
-			CFMutableDictionaryRef propertyDict = CoreFoundation.INSTANCE.CFDictionaryCreateMutable(
-					CoreFoundation.ALLOCATOR, 0, null, null);
-			CoreFoundation.INSTANCE.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
-			CFMutableDictionaryRef matchingDict = CoreFoundation.INSTANCE.CFDictionaryCreateMutable(
-					CoreFoundation.ALLOCATOR, 0, null, null);
-			CoreFoundation.INSTANCE.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
+			CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(
+					JnaInstances.ALLOCATOR, 0, null, null);
+			JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
+			CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(
+					JnaInstances.ALLOCATOR, 0, null, null);
+			JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
 
 			IntByReference serviceIterator = new IntByReference();
 			// getMatchingServices releases matchingDict
 			IOKit.Util.getMatchingServices(matchingDict, serviceIterator);
-			int sdService = IOKit.INSTANCE.IOIteratorNext(serviceIterator.getValue());
+			int sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
 			while (sdService != 0) {
 				// look up the serial number
 				drive.serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
-				IOKit.INSTANCE.IOObjectRelease(sdService);
+				JnaInstances.ioKit.IOObjectRelease(sdService);
 				if (drive.serial != null)
 					break;
 				// iterate
-				sdService = IOKit.INSTANCE.IOIteratorNext(serviceIterator.getValue());
+				sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
 			}
-			IOKit.INSTANCE.IOObjectRelease(serviceIterator.getValue());
-			CoreFoundation.INSTANCE.CFRelease(modelNameRef);
-			CoreFoundation.INSTANCE.CFRelease(propertyDict);
+			JnaInstances.ioKit.IOObjectRelease(serviceIterator.getValue());
+			JnaInstances.coreFoundation.CFRelease(modelNameRef);
+			JnaInstances.coreFoundation.CFRelease(propertyDict);
 			newDrive(drive);
 			return;
 		}
@@ -299,7 +299,7 @@ public class DrivesMac extends Drives {
 		
 		DiskPartition part = new DiskPartition();
 		part.size = size;
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDABusPath);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
 		String OSID = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		synchronized (drives) {
 			for (Drive d : drives)
@@ -309,9 +309,9 @@ public class DrivesMac extends Drives {
 				}
 		}
 		if (part.drive == null) return;
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAVolumeKind);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeKind);
 		part.filesystem = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
-		ptr = CoreFoundation.INSTANCE.CFDictionaryGetValue(diskInfo, strDAVolumeName);
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeName);
 		part.name = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		part.mountPoint = getMountPointFromDeviceName("/dev/" + bsdName, bsdNamesMountPoints);
 		((PhysicalDriveUnix)part.drive).partitions.add(part);

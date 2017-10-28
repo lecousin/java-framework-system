@@ -3,6 +3,7 @@ package net.lecousin.framework.system.unix.jna.mac;
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.concurrent.synch.ISynchronizationPoint;
 import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
+import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.util.AsyncCloseable;
 
 public class RunLoopThread extends Thread implements AsyncCloseable<Exception> {
@@ -29,14 +30,14 @@ public class RunLoopThread extends Thread implements AsyncCloseable<Exception> {
 	public ISynchronizationPoint<Exception> closeAsync() {
 		if (close != null) return close;
 		close = new SynchronizationPoint<>();
-		CoreFoundation.INSTANCE.CFRunLoopStop(CoreFoundation.INSTANCE.CFRunLoopGetMain());
+		JnaInstances.coreFoundation.CFRunLoopStop(JnaInstances.coreFoundation.CFRunLoopGetMain());
 		return close;
 	}
 	
 	@Override
 	public void run() {
 		start.unblock();
-		CoreFoundation.INSTANCE.CFRunLoopRun();
+		JnaInstances.coreFoundation.CFRunLoopRun();
 		if (close == null) close = new SynchronizationPoint<>(true);
 		else close.unblock();
 	}

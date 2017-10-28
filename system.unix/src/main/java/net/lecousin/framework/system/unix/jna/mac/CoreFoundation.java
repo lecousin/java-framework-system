@@ -2,7 +2,6 @@ package net.lecousin.framework.system.unix.jna.mac;
 
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
-import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
@@ -11,12 +10,10 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import net.lecousin.framework.system.unix.jna.JnaInstances;
+
 public interface CoreFoundation extends Library {
 
-	public static final CoreFoundation INSTANCE = Native.loadLibrary("CoreFoundation", CoreFoundation.class);
-	
-	public static final CFAllocatorRef ALLOCATOR = INSTANCE.CFAllocatorGetDefault();
-	
 	public static final int UTF_8 = 0x08000100;
 	
     public static class CFAllocatorRef extends PointerType {
@@ -47,7 +44,7 @@ public interface CoreFoundation extends Library {
         public static CFStringRef toCFString(String s) {
             final char[] chars = s.toCharArray();
             int length = chars.length;
-            return INSTANCE.CFStringCreateWithCharacters(null, chars, new NativeLong(length));
+            return JnaInstances.coreFoundation.CFStringCreateWithCharacters(null, chars, new NativeLong(length));
         }
     }
 
@@ -100,31 +97,31 @@ public interface CoreFoundation extends Library {
     	
         public static long cfPointerToLong(Pointer p) {
             LongByReference lbr = new LongByReference();
-            INSTANCE.CFNumberGetValue(p, CFNumberType.kCFNumberLongLongType.ordinal(), lbr);
+            JnaInstances.coreFoundation.CFNumberGetValue(p, CFNumberType.kCFNumberLongLongType.ordinal(), lbr);
             return lbr.getValue();
         }
     	
         public static int cfPointerToInt(Pointer p) {
             IntByReference ibr = new IntByReference();
-            INSTANCE.CFNumberGetValue(p, CFNumberType.kCFNumberIntType.ordinal(), ibr);
+            JnaInstances.coreFoundation.CFNumberGetValue(p, CFNumberType.kCFNumberIntType.ordinal(), ibr);
             return ibr.getValue();
         }
 
         public static boolean cfPointerToBoolean(Pointer p) {
-            return INSTANCE.CFBooleanGetValue(p);
+            return JnaInstances.coreFoundation.CFBooleanGetValue(p);
         }
         
         public static String cfPointerToString(Pointer p) {
             if (p == null) {
                 return "null";
             }
-            long length = INSTANCE.CFStringGetLength(p);
-            long maxSize = INSTANCE.CFStringGetMaximumSizeForEncoding(length, UTF_8);
+            long length = JnaInstances.coreFoundation.CFStringGetLength(p);
+            long maxSize = JnaInstances.coreFoundation.CFStringGetMaximumSizeForEncoding(length, UTF_8);
             if (maxSize == 0) {
                 maxSize = 1;
             }
             Pointer buf = new Memory(maxSize);
-            INSTANCE.CFStringGetCString(p, buf, maxSize, UTF_8);
+            JnaInstances.coreFoundation.CFStringGetCString(p, buf, maxSize, UTF_8);
             return buf.getString(0);
         }
         
