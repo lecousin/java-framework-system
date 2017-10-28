@@ -14,8 +14,8 @@
   <modules>
     <module>system-api</module>
     <module>system-impl</module>
-    <module>unix</module>
-    <module>windows</module>
+    <module>system.unix</module>
+    <module>system.windows</module>
   </modules>
   
   <licenses>
