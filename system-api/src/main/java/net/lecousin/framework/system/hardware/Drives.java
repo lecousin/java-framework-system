@@ -47,8 +47,8 @@ public abstract class Drives {
 							drives.getDrivesAndListen(new DriveListenerImpl(
 								(drive) -> { onNewDrive.fire(new Pair<>(drive, drive.getMountPoints())); },
 								(drive) -> { onDriveRemoved.fire(new Pair<>(drive, drive.getMountPoints())); },
-								(part) -> { onNewPartition.fire(new Pair<>(part.drive, part.mountPoint)); },
-								(part) -> { onPartitionRemoved.fire(new Pair<>(part.drive, part.mountPoint)); }
+								(part) -> { if (part.mountPoint != null) onNewPartition.fire(new Pair<>(part.drive, part.mountPoint)); },
+								(part) -> { if (part.mountPoint != null) onPartitionRemoved.fire(new Pair<>(part.drive, part.mountPoint)); }
 							));
 						}
 					});

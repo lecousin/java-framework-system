@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.sun.jna.Structure;
 
-public interface SystemB {
+public interface SystemB extends com.sun.jna.platform.mac.SystemB {
 	
     // params.h
     public static int MAXPATHLEN = 1024;
