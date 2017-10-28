@@ -26,6 +26,7 @@
 
   <profiles>
   	<profile>
+  		<id>windows</id>
   		<activation>
   			<os>
   				<family>windows</family>
@@ -40,6 +41,7 @@
   		</dependencies>
   	</profile>
   	<profile>
+  		<id>unix</id>
   		<activation>
   			<os>
   				<family>unix</family>
