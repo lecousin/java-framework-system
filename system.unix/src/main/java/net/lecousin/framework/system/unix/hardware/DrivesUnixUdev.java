@@ -384,7 +384,6 @@ public class DrivesUnixUdev extends Drives {
 	}
 
 	private void partitionRemoved(Udev udev, Udev.UdevDevice device) {
-		String devpath = udev.udev_device_get_property_value(device, "DEVPATH");
 		String devnode = udev.udev_device_get_devnode(device);
 
 		DiskPartition part = null;

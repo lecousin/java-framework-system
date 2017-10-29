@@ -300,6 +300,7 @@ public class DrivesWin extends Drives {
         		drive.type = PhysicalDrive.Type.CDROM;
         		DiskPartition partition = new DiskPartition();
         		partition.drive = drive;
+        		partition.OSID = deviceId;
         		drive.partitions.add(partition);
         		if (LCSystem.log.debug()) LCSystem.log.debug("CD Drive detected: " + deviceId);
 				buffer = new byte[2048];
@@ -471,25 +472,64 @@ public class DrivesWin extends Drives {
         	// check added and modified
 	        for (Drive drive : drives) {
 	        	if (drive instanceof PhysicalDriveWin) {
-		        	boolean found = false;
+	        		PhysicalDriveWin existing = null;
 		        	for (Drive d : this.drives) {
 		        		if (!(d instanceof PhysicalDriveWin)) continue;
 		        		if (((PhysicalDriveWin)d).osId.equals(((PhysicalDriveWin)drive).osId)) {
-		        			found = true;
+		        			existing = (PhysicalDriveWin)d;
 		        			break;
 		        		}
 		        	}
-		        	if (!found) {
+		        	if (existing == null) {
 			        	this.drives.add(drive);
 	        			synchronized (listeners) {
 	        				for (DriveListener listener : listeners)
 	        					listener.newDrive(drive);
 	        			}
 		        	} else {
-		        		// check partitions removed
-		        		// TODO
-		        		// check partition added and modified
-		        		// TODO
+		        		// check partitions removed, or new mount point
+		        		for (Iterator<DiskPartition> it = existing.partitions.iterator(); it.hasNext(); ) {
+		        			DiskPartition p = it.next();
+		        			boolean found = false;
+		        			for (DiskPartition p2 : ((PhysicalDriveWin)drive).partitions)
+		        				if (p2.OSID.equals(p.OSID)) {
+		        					found = true;
+		        					if (p.mountPoint == null && p2.mountPoint != null) {
+		        						p.mountPoint = p2.mountPoint;
+		        						LCSystem.log.info("Previously detected partition without mount point is now mounted: " + p2);
+		        	        			synchronized (listeners) {
+		        	        				for (DriveListener listener : listeners)
+		        	        					listener.newPartition(p);
+		        	        			}
+		        					}
+		        					break;
+		        				}
+		        			if (!found) {
+		        				it.remove();
+        						LCSystem.log.info("Parition removed: " + p);
+        	        			synchronized (listeners) {
+        	        				for (DriveListener listener : listeners)
+        	        					listener.partitionRemoved(p);
+        	        			}
+		        			}
+		        		}
+		        		// check partitions added
+		        		for (DiskPartition p : ((PhysicalDriveWin) drive).partitions) {
+		        			boolean found = false;
+		        			for (DiskPartition p2 : existing.partitions)
+		        				if (p2.OSID.equals(p.OSID)) {
+		        					found = true;
+		        					break;
+		        				}
+		        			if (!found) {
+		        				LCSystem.log.info("New partition added to the drive: " + p);
+		        				existing.partitions.add(p);
+        	        			synchronized (listeners) {
+        	        				for (DriveListener listener : listeners)
+        	        					listener.newPartition(p);
+        	        			}
+		        			}
+		        		}
 		        	}
 	        	} else if (drive instanceof NetworkDriveWin) {
 		        	boolean found = false;
