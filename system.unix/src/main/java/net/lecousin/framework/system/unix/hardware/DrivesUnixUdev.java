@@ -31,6 +31,7 @@ import net.lecousin.framework.system.unix.jna.LibC.TimeVal;
 import net.lecousin.framework.system.unix.jna.linux.Udev;
 import net.lecousin.framework.util.AsyncCloseable;
 
+/** Drives implementation for Linux with udev. */
 public class DrivesUnixUdev extends Drives {
 
 	private WorkProgress init = null;
@@ -324,10 +325,10 @@ public class DrivesUnixUdev extends Drives {
 		if (drive == null)
 			LCSystem.log.warn("Partition on unknown drive: " + devpath);
 		else {
-			String OSID = udev.udev_device_get_devnode(device);
+			String osId = udev.udev_device_get_devnode(device);
 			boolean found = false;
 			for (DiskPartition p : drive.partitions)
-				if (p.OSID != null && p.OSID.equals(OSID)) {
+				if (p.OSID != null && p.OSID.equals(osId)) {
 					found = true;
 					break;
 				}
@@ -335,7 +336,7 @@ public class DrivesUnixUdev extends Drives {
 				return;
 			DiskPartition p = new DiskPartition();
 			p.drive = drive;
-			p.OSID = OSID;
+			p.OSID = osId;
 			String s = udev.udev_device_get_property_value(device, "PARTN");
 			if (s != null)
 				try { p.index = Integer.parseInt(s); }

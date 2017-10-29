@@ -16,8 +16,12 @@ import net.lecousin.framework.system.unix.jna.mac.IOKit;
 import net.lecousin.framework.system.unix.jna.mac.RunLoopThread;
 import net.lecousin.framework.system.unix.jna.mac.SystemB;
 
+/**
+ * Initialization.
+ */
 public class Init implements CustomExtensionPoint {
 
+	/** Constructor called by the extension point mechanism. */
 	public Init() {
 		if (Platform.isMac()) {
 			try {
@@ -36,6 +40,7 @@ public class Init implements CustomExtensionPoint {
 				JnaInstances.udev = Native.loadLibrary("udev", Udev.class);
 				Drives.setInstance(new DrivesUnixUdev());
 			} catch (Throwable t) {
+				LCSystem.log.error("Error loading native libraries for Linux", t);
 			}
 		}
 	}

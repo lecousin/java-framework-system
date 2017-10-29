@@ -147,7 +147,9 @@ public class DrivesMac extends Drives {
 			}
 		}, null);
 		
-		da.DASessionScheduleWithRunLoop(session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
+		da.DASessionScheduleWithRunLoop(
+			session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode")
+		);
 		
 		LCCore.get().toClose(new Closeable() {
 			@Override
@@ -302,10 +304,10 @@ public class DrivesMac extends Drives {
 		DiskPartition part = new DiskPartition();
 		part.size = size;
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
-		String OSID = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		String osId = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		synchronized (drives) {
 			for (Drive d : drives)
-				if (((PhysicalDriveUnix)d).OSID != null && ((PhysicalDriveUnix)d).OSID.equals(OSID)) {
+				if (((PhysicalDriveUnix)d).OSID != null && ((PhysicalDriveUnix)d).OSID.equals(osId)) {
 					part.drive = d;
 					break;
 				}

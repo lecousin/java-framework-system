@@ -17,5 +17,3 @@ Current version: 0.2.0
 Master: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=master "Build Status")
 
 Branch 0.2: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.2 "Build Status")
-
-Branch 0.3: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.3 "Build Status") 

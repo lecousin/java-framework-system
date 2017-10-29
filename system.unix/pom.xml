@@ -9,6 +9,10 @@
   	<relativePath>..</relativePath>
   </parent>
   
+	<name>lecousin.net Java framework - system.unix</name>
+	<description>Unix operating systems functionalities</description>
+	<url>https://github.com/lecousin/java-framework-system</url>
+  
   <licenses>
     <license>
       <name>Apache 2.0</name>
@@ -23,6 +27,28 @@
     	<name>Guillaume Le Cousin</name>
     </developer>
   </developers>
+  
+	<scm>
+		<connection>scm:git:https://github.com/lecousin/java-framework-system.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com:lecousin/java-framework-system.git</developerConnection>
+		<url>https://github.com/lecousin/java-framework-system</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<distributionManagement>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
   
   <dependencies>
   	<dependency>
@@ -40,4 +66,69 @@
   		<version>4.4.0</version>
   	</dependency>
   </dependencies>
+  
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<additionalparam>-Xdoclint:none</additionalparam>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+  	<profiles>
+		<profile>
+	        <id>ossrh</id>
+	        <activation>
+	            <property>
+	                <name>ossrh</name>
+	                <value>true</value>
+	            </property>
+	        </activation>
+	        <build>
+	        	<plugins>
+			  		<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+	        	</plugins>
+	        </build>
+	    </profile>
+	</profiles>
+  
 </project>

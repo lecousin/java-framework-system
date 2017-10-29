@@ -496,7 +496,9 @@ public class DrivesWin extends Drives {
 		        					found = true;
 		        					if (p.mountPoint == null && p2.mountPoint != null) {
 		        						p.mountPoint = p2.mountPoint;
-		        						LCSystem.log.info("Previously detected partition without mount point is now mounted: " + p2);
+		        						LCSystem.log.info(
+		        							"Previously detected partition without mount point is now mounted: "
+		        							+ p2);
 		        	        			synchronized (listeners) {
 		        	        				for (DriveListener listener : listeners)
 		        	        					listener.newPartition(p);
