@@ -39,6 +39,11 @@ public class DiskPartition {
 	public long lba;
 	public long nbSectors;
 	
+	@Override
+	public String toString() {
+		return "Partition " + OSID + " (" + name + ")";
+	}
+	
 	/** Convert a partition into a File, by using its mount point. */
 	public static class ToFile implements Adapter<DiskPartition, File> {
 		@Override

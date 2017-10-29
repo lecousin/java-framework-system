@@ -6,6 +6,9 @@ import java.util.List;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
+import net.lecousin.framework.application.Application;
+import net.lecousin.framework.application.Artifact;
+import net.lecousin.framework.application.Version;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFArrayRef;
@@ -25,6 +28,7 @@ import net.lecousin.framework.system.unix.jna.mac.SystemB.Statfs;
 public class TestDiskArbitration {
 
 	public static void main(String[] args) {
+		Application.start(new Artifact("net.lecousin.framework.system", "test-mac", new Version("0")), true);
 		new Init();
 		
         int numfs = JnaInstances.systemB.getfsstat64(null, 0, 0);

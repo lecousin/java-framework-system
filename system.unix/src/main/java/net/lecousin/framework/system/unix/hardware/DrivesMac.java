@@ -267,6 +267,7 @@ public class DrivesMac extends Drives {
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceRevision);
 			drive.version = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 			drive.itype = InterfaceType.Unknown; // TODO
+			drive.type = PhysicalDrive.Type.UNKNOWN; // TODO
 			
 			CFStringRef modelNameRef = CFStringRef.toCFString(model);
 			CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(
@@ -309,22 +310,32 @@ public class DrivesMac extends Drives {
 				}
 		}
 		if (part.drive == null) return;
+		part.OSID = bsdName;
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeKind);
 		part.filesystem = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeName);
 		part.name = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		part.mountPoint = getMountPointFromDeviceName("/dev/" + bsdName, bsdNamesMountPoints);
+		for (DiskPartition p : ((PhysicalDriveUnix)part.drive).partitions) {
+			if (p.OSID.equals(bsdName))
+				return;
+		}
 		((PhysicalDriveUnix)part.drive).partitions.add(part);
 		newPartition(part);
 	}
 	
 	private void newDrive(PhysicalDriveUnix drive) {
-		LCSystem.log.info("New drive: " + drive);
+		LCSystem.log.info("New drive on " + drive.devpath + " (" + drive.OSID + "): " + drive);
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);
 		}
 		synchronized (drives) {
+			for (Drive d : drives)
+				if ((d instanceof PhysicalDriveUnix) && ((PhysicalDriveUnix)d).devpath.equals(drive.devpath)) {
+					LCSystem.log.info("Drive already known: " + drive);
+					return;
+				}
 			drives.add(drive);
 		}
 		for (DriveListener listener : listeners)
@@ -332,7 +343,7 @@ public class DrivesMac extends Drives {
 	}
 	
 	private void newPartition(DiskPartition part) {
-		// TODO log
+		LCSystem.log.info("New partition: " + part);
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);
