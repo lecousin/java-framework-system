@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -142,7 +143,7 @@ public class DrivesMac extends Drives {
 		da.DARegisterDiskDisappearedCallback(session, null, new DADiskDisappearedCallback() {
 			@Override
 			public void callback(DADiskRef disk, Pointer context) {
-				// TODO diskRemoved(disk);
+				diskRemoved(disk);
 			}
 		}, null);
 		
@@ -323,6 +324,56 @@ public class DrivesMac extends Drives {
 		((PhysicalDriveUnix)part.drive).partitions.add(part);
 		newPartition(part);
 	}
+
+	private void diskRemoved(DADiskRef disk) {
+		DiskArbitration da = JnaInstances.diskArbitration;
+		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
+		if (diskInfo == null) return;
+		
+		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
+		String model = CoreFoundation.Util.cfPointerToString(ptr);
+
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
+		String bsdName = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		
+		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaWhole);
+		if (ptr != null && CoreFoundation.Util.cfPointerToBoolean(ptr)) {
+			if ("Disk Image".equals(model)) {
+				diskImageRemoved(bsdName);
+				return;
+			}
+			PhysicalDriveUnix drive = null;
+			synchronized (drives) {
+				for (Iterator<Drive> it = drives.iterator(); it.hasNext(); ) {
+					PhysicalDriveUnix d = (PhysicalDriveUnix)it.next();
+					if (d.devpath.equals(bsdName)) {
+						drive = d;
+						it.remove();
+						break;
+					}
+				}
+			}
+			if (drive != null)
+				driveRemoved(drive);
+			return;
+		}
+		// volume
+
+		DiskPartition part = null;
+		synchronized (drives) {
+			for (Drive d : drives)
+				for (Iterator<DiskPartition> it = ((PhysicalDriveUnix)d).partitions.iterator(); it.hasNext(); ) {
+					DiskPartition p = it.next();
+					if (p.OSID.equals(bsdName)) {
+						part = p;
+						it.remove();
+						break;
+					}
+				}
+		}
+		if (part == null) return;
+		partitionRemoved(part);
+	}
 	
 	private void newDrive(PhysicalDriveUnix drive) {
 		LCSystem.log.info("New drive on " + drive.devpath + " (" + drive.OSID + "): " + drive);
@@ -342,6 +393,16 @@ public class DrivesMac extends Drives {
 			listener.newDrive(drive);
 	}
 	
+	private void driveRemoved(PhysicalDriveUnix drive) {
+		LCSystem.log.info("Drive removed on " + drive.devpath + " (" + drive.OSID + "): " + drive);
+		List<DriveListener> listeners;
+		synchronized (this.listeners) {
+			listeners = new ArrayList<>(this.listeners);
+		}
+		for (DriveListener listener : listeners)
+			listener.driveRemoved(drive);
+	}
+	
 	private void newPartition(DiskPartition part) {
 		LCSystem.log.info("New partition: " + part);
 		List<DriveListener> listeners;
@@ -350,6 +411,16 @@ public class DrivesMac extends Drives {
 		}
 		for (DriveListener listener : listeners)
 			listener.newPartition(part);
+	}
+	
+	private void partitionRemoved(DiskPartition part) {
+		LCSystem.log.info("Partition removed: " + part);
+		List<DriveListener> listeners;
+		synchronized (this.listeners) {
+			listeners = new ArrayList<>(this.listeners);
+		}
+		for (DriveListener listener : listeners)
+			listener.partitionRemoved(part);
 	}
 	
 	private void newDiskImage(String bsdName, Mutable<List<Pair<String, String>>> bsdNamesMountPoints, Mutable<List<DiskImageInfo>> diskImages) {
@@ -379,11 +450,32 @@ public class DrivesMac extends Drives {
 						DiskPartition p = new DiskPartition();
 						p.drive = part.drive;
 						p.mountPoint = mountPoint;
+						p.OSID = bsdName;
 						newPartition(p);
 					}
 					return;
 				}
 		}
+	}
+	
+	private void diskImageRemoved(String bsdName) {
+		DiskPartition part = null;
+		synchronized (drives) {
+			for (Drive d : drives) {
+				for (Iterator<DiskPartition> it = ((PhysicalDriveUnix)d).partitions.iterator(); it.hasNext(); ) {
+					DiskPartition p = it.next();
+					if (p.OSID.equals(bsdName)) {
+						it.remove();
+						part = p;
+						break;
+					}
+				}
+				if (part != null)
+					break;
+			}
+		}
+		if (part != null)
+			partitionRemoved(part);
 	}
 
 	@Override
