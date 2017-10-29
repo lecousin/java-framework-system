@@ -70,9 +70,56 @@ public interface LibC extends com.sun.jna.platform.unix.LibC {
             );
         }
     }	
+
+	public static class PollFD extends Structure {
+
+		/** File descriptor to poll. */
+	    public int fd;
+	    /** Types of events poller cares about. */
+	    public short events;
+	    /** Types of events that actually occurred. */
+	    public short revents;
+
+	    public PollFD(int fd, short events, short revents) {
+	        super();
+	        this.fd = fd;
+	        this.events = events;
+	        this.revents = revents;
+	    }
+
+	    /**
+	     * Specifies fields order.
+	     * 
+	     * @see com.sun.jna.Structure#getFieldOrder()
+	     */
+	    @SuppressWarnings({ "unchecked", "rawtypes" })
+		@Override
+	    protected List getFieldOrder() {
+	        return Arrays.asList("fd", "events", "revents");
+	    }
+	    
+    }
+	
+	/** Open for reading only. */
+    public static final int O_RDONLY = 00;
+
+    /** Open in nonblocking mode. */
+    public static final int O_NONBLOCK = 04000;
+
+    /** There is urgent data to read. */
+    public static final short POLLPRI = 0x002;
+
+    /** Error condition. */
+    public static final short POLLERR = 0x008;
+    
 	
 	public int getpid();
 	
+	public int open(String path, int oflag);
+	
+	public int close(int fd);
+	
 	public int select(int n, FDSet read, FDSet write, FDSet error, TimeVal timeout);
 	
+	public int poll(PollFD[] fds, int nfds, int timeout);
 }

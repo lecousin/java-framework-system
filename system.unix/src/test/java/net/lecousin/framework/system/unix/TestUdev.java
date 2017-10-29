@@ -1,5 +1,8 @@
 package net.lecousin.framework.system.unix;
 
+import net.lecousin.framework.application.Application;
+import net.lecousin.framework.application.Artifact;
+import net.lecousin.framework.application.Version;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.LibC;
 import net.lecousin.framework.system.unix.jna.LibC.FDSet;
@@ -9,6 +12,7 @@ import net.lecousin.framework.system.unix.jna.linux.Udev;
 public class TestUdev {
 
 	public static void main(String[] args) {
+		Application.start(new Artifact("net.lecousin.framework.system", "test-linux", new Version("0")), true);
 		new Init();
 		Udev udev = JnaInstances.udev;
 		Udev.UdevHandle handle = udev.udev_new();

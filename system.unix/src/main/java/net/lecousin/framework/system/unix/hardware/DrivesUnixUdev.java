@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -130,13 +131,19 @@ public class DrivesUnixUdev extends Drives {
 		
 		addAdditionalPartitions(mountsLines);
 
-		Monitor monitor = new Monitor(handle);
+		MonitorUdev monitor = new MonitorUdev(handle);
 		monitor.start();
 		LCCore.get().toClose(monitor);
+		File f = new File("/proc/self/mounts");
+		if (f.exists()) {
+			MonitorMounts m = new MonitorMounts();
+			m.start();
+			LCCore.get().toClose(m);
+		}
 	}
 	
-	private class Monitor extends Thread implements AsyncCloseable<Exception> {
-		public Monitor(Udev.UdevHandle handle) {
+	private class MonitorUdev extends Thread implements AsyncCloseable<Exception> {
+		public MonitorUdev(Udev.UdevHandle handle) {
 			super("Udev Monitor");
 			this.handle = handle;
 		}
@@ -151,22 +158,36 @@ public class DrivesUnixUdev extends Drives {
 			udev.udev_monitor_filter_add_match_subsystem_devtype(monitor, "block", null);
 			udev.udev_monitor_enable_receiving(monitor);
 			int fd = udev.udev_monitor_get_fd(monitor);
-			while (closing == null) {
-				FDSet fds = new FDSet();
+			TimeVal tv;
+			FDSet fds;
+			synchronized (DrivesUnixUdev.class) {
+				fds = new FDSet();
 				fds.FD_ZERO();
 				fds.FD_SET(fd);
-				TimeVal tv = new TimeVal(2, 0);
-				
+				tv = new TimeVal(2, 0);
+			}
+			while (closing == null) {
+				synchronized (DrivesUnixUdev.class) {
+					fds = new FDSet();
+					fds.FD_ZERO();
+					fds.FD_SET(fd);
+					tv = new TimeVal(2, 0);
+				}
 				int ret = LibC.INSTANCE.select(fd + 1, fds, null, null, tv);
 				if (ret <= 0) continue;
 
 				Udev.UdevDevice device = udev.udev_monitor_receive_device(monitor);
 				try {
-					List<String[]> mounts = readMounts();
-					newDevice(udev, device, mounts);
-					addAdditionalPartitions(mounts);
+					String action = udev.udev_device_get_property_value(device, "ACTION");
+					if ("add".equals(action)) {
+						List<String[]> mounts = readMounts();
+						newDevice(udev, device, mounts);
+						addAdditionalPartitions(mounts);
+					} else if ("remove".equals(action)) {
+						deviceRemoved(udev, device);
+					}
 				} catch (Throwable t) {
-					LCSystem.log.error("Error analyzing new device", t);
+					LCSystem.log.error("Error analyzing device", t);
 				} finally {
 					udev.udev_device_unref(device);
 				}
@@ -174,6 +195,46 @@ public class DrivesUnixUdev extends Drives {
 			
 			udev.udev_monitor_unref(monitor);
 			udev.udev_unref(handle);
+			closing.unblock();
+		}
+		
+		@Override
+		public ISynchronizationPoint<Exception> closeAsync() {
+			if (closing != null) return closing;
+			closing = new SynchronizationPoint<>();
+			return closing;
+		}
+	}
+
+	private class MonitorMounts extends Thread implements AsyncCloseable<Exception> {
+		public MonitorMounts() {
+			super("Mount points Monitor");
+		}
+		
+		private SynchronizationPoint<Exception> closing = null;
+		
+		@Override
+		public void run() {
+			int fd;
+			LibC.PollFD[] pfd;
+			synchronized (DrivesUnixUdev.class) {
+				fd = LibC.INSTANCE.open("/proc/self/mounts", LibC.O_RDONLY);
+				LibC.PollFD pollfd = new LibC.PollFD(fd, (short)(LibC.POLLERR | LibC.POLLPRI), (short)0);
+				pfd = new LibC.PollFD[] { pollfd };
+			}
+			while (closing == null) {
+				int ret = LibC.INSTANCE.poll(pfd, 1, 2000);
+				if (ret <= 0) continue;
+				try {
+					LCSystem.log.info("Mount points file changed.");
+					List<String[]> mounts = readMounts();
+					addAdditionalPartitions(mounts);
+				} catch (Throwable t) {
+					LCSystem.log.error("Error analyzing mount points", t);
+				}
+			}
+
+			LibC.INSTANCE.close(fd);
 			closing.unblock();
 		}
 		
@@ -233,6 +294,8 @@ public class DrivesUnixUdev extends Drives {
 		}
 		if ("ata".equals(bus))
 			drive.itype = PhysicalDrive.InterfaceType.ATA;
+		else if ("usb".equals(bus))
+			drive.itype = PhysicalDrive.InterfaceType.USB;
 		else {
 			LCSystem.log.warn("Unknown bus type '" + bus + "' for " + devnode);
 			drive.itype = PhysicalDrive.InterfaceType.Unknown;
@@ -261,9 +324,18 @@ public class DrivesUnixUdev extends Drives {
 		if (drive == null)
 			LCSystem.log.warn("Partition on unknown drive: " + devpath);
 		else {
+			String OSID = udev.udev_device_get_devnode(device);
+			boolean found = false;
+			for (DiskPartition p : drive.partitions)
+				if (p.OSID != null && p.OSID.equals(OSID)) {
+					found = true;
+					break;
+				}
+			if (found)
+				return;
 			DiskPartition p = new DiskPartition();
 			p.drive = drive;
-			p.OSID = udev.udev_device_get_devnode(device);
+			p.OSID = OSID;
 			String s = udev.udev_device_get_property_value(device, "PARTN");
 			if (s != null)
 				try { p.index = Integer.parseInt(s); }
@@ -274,6 +346,71 @@ public class DrivesUnixUdev extends Drives {
 			drive.partitions.add(p);
 			newPartition(p);
 		}
+	}
+	
+	private void deviceRemoved(Udev udev, Udev.UdevDevice device) {
+		String devnode = udev.udev_device_get_devnode(device);
+		String devtype = udev.udev_device_get_devtype(device);
+		if ("disk".equals(devtype)) {
+			if (!devnode.startsWith("/dev/loop") && !devnode.startsWith("/dev/ram")) {
+				diskRemoved(udev, device);
+			}
+		} else if ("partition".equals(devtype)) {
+			partitionRemoved(udev, device);
+		}
+	}
+	
+	private void diskRemoved(Udev udev, Udev.UdevDevice device) {
+		String devpath = udev.udev_device_get_property_value(device, "DEVPATH");
+		Drive drive = null;
+		synchronized (drives) {
+			for (Iterator<Drive> it = drives.iterator(); it.hasNext(); ) {
+				Drive d = it.next();
+				if ((d instanceof PhysicalDriveUnix) && ((PhysicalDriveUnix)d).devpath.equals(devpath)) {
+					it.remove();
+					drive = d;
+					break;
+				}
+			}
+		}
+		if (drive == null) return;
+		LCSystem.log.info("Drive removed: " + drive);
+		List<DriveListener> listeners;
+		synchronized (this.listeners) {
+			listeners = new ArrayList<>(this.listeners);
+		}
+		for (DriveListener listener : listeners)
+			listener.driveRemoved(drive);
+	}
+
+	private void partitionRemoved(Udev udev, Udev.UdevDevice device) {
+		String devpath = udev.udev_device_get_property_value(device, "DEVPATH");
+		String devnode = udev.udev_device_get_devnode(device);
+
+		DiskPartition part = null;
+		synchronized (drives) {
+			for (Drive d : drives) {
+				if (!(d instanceof PhysicalDriveUnix)) continue;
+				for (Iterator<DiskPartition> it = ((PhysicalDriveUnix)d).partitions.iterator(); it.hasNext(); ) {
+					DiskPartition p = it.next();
+					if (p.OSID != null && p.OSID.equals(devnode)) {
+						part = p;
+						it.remove();
+						break;
+					}
+				}
+				if (part != null) break;
+			}
+		}
+		
+		if (part == null) return;
+		LCSystem.log.info("Partition removed: " + part);
+		List<DriveListener> listeners;
+		synchronized (this.listeners) {
+			listeners = new ArrayList<>(this.listeners);
+		}
+		for (DriveListener listener : listeners)
+			listener.partitionRemoved(part);
 	}
 	
 	private void readPartitions(PhysicalDriveUnix drive) {
@@ -367,6 +504,7 @@ public class DrivesUnixUdev extends Drives {
 		if (mountsLines == null) return;
 		for (String[] tokens : mountsLines) {
 			PhysicalDriveUnix dr = null;
+			DiskPartition newMountPoint = null;
 			synchronized (drives) {
 				for (Drive d : drives) {
 					if (!(d instanceof PhysicalDriveUnix)) continue;
@@ -376,6 +514,10 @@ public class DrivesUnixUdev extends Drives {
 					for (DiskPartition p : drive.partitions) {
 						if (p.OSID.equals(tokens[0])) {
 							found = true;
+							if (p.mountPoint == null) {
+								p.mountPoint = new File(tokens[1]);
+								newMountPoint = p;
+							}
 							break;
 						}
 					}
@@ -388,10 +530,11 @@ public class DrivesUnixUdev extends Drives {
 				DiskPartition dp = new DiskPartition();
 				dp.mountPoint = new File(tokens[1]);
 				dp.drive = dr;
+				dp.OSID = tokens[0];
 				dr.partitions.add(dp);
 				newPartition(dp);
-				return;
-			}
+			} else if (newMountPoint != null)
+				newPartition(newMountPoint);
 		}
 	}
 	
