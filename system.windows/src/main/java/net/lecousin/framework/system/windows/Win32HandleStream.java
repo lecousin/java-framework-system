@@ -155,7 +155,7 @@ public class Win32HandleStream extends IO.AbstractIO implements IO.Readable.Seek
 			}
 		};
 		t.start();
-		return t.getSynch();
+		return t.getOutput();
 	}
 	
 	@Override
@@ -199,7 +199,7 @@ public class Win32HandleStream extends IO.AbstractIO implements IO.Readable.Seek
 			}
 		};
 		t.start();
-		return t.getSynch();
+		return t.getOutput();
 	}
 	
 	@Override
