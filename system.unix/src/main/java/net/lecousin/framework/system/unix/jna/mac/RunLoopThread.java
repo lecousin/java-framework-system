@@ -8,13 +8,13 @@ import net.lecousin.framework.util.AsyncCloseable;
 
 public class RunLoopThread extends Thread implements AsyncCloseable<Exception> {
 
-	public static void init() {
+	public static void init() throws Exception {
 		if (instance != null) return;
 		instance = new RunLoopThread();
 		instance.start();
 		LCCore.Environment env = LCCore.get();
 		if (env != null) env.toClose(instance);
-		instance.start.block(0);
+		instance.start.blockThrow(0);
 	}
 	
 	private static RunLoopThread instance = null;
