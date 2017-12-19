@@ -17,13 +17,14 @@ import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.IOUtil;
 import net.lecousin.framework.system.windows.jna.Kernel32;
+import net.lecousin.framework.util.ConcurrentCloseable;
 import net.lecousin.framework.util.Pair;
 import net.lecousin.framework.util.RunnableWithParameter;
 
 /**
  * A Win32 stream to IO.Readable.Seekable.
  */
-public class Win32HandleStream extends IO.AbstractIO implements IO.Readable.Seekable, IO.KnownSize {
+public class Win32HandleStream extends ConcurrentCloseable implements IO.Readable.Seekable, IO.KnownSize {
 	
 	private HANDLE h;
 	private long sector = 0;
