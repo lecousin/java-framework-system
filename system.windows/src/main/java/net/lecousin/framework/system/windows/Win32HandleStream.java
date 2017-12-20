@@ -100,10 +100,17 @@ public class Win32HandleStream extends ConcurrentCloseable implements IO.Readabl
 	public IO getWrappedIO() { return null; }
 	
 	@Override
-	protected ISynchronizationPoint<IOException> closeIO() {
+	protected ISynchronizationPoint<?> closeUnderlyingResources() {
 		//if (sector_modified) flush_sector();
 		com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
-		return new SynchronizationPoint<>(true);
+		return null;
+	}
+	
+	@Override
+	protected void closeResources(SynchronizationPoint<Exception> ondone) {
+		h = null;
+		buffer = null;
+		ondone.unblock();
 	}
 	
 	@Override
@@ -155,7 +162,7 @@ public class Win32HandleStream extends ConcurrentCloseable implements IO.Readabl
 				return Integer.valueOf(l);
 			}
 		};
-		t.start();
+		operation(t.start());
 		return t.getOutput();
 	}
 	
@@ -199,7 +206,7 @@ public class Win32HandleStream extends ConcurrentCloseable implements IO.Readabl
 				return Integer.valueOf(total);
 			}
 		};
-		t.start();
+		operation(t.start());
 		return t.getOutput();
 	}
 	

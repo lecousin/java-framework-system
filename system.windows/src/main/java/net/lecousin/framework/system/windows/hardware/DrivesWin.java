@@ -416,7 +416,7 @@ public class DrivesWin extends Drives {
             		if (LCSystem.log.error())
             			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);
         		}
-        	} catch (IOException e) {
+        	} catch (Exception e) {
         		if (LCSystem.log.error())
         			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);
         	}
