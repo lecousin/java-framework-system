@@ -45,4 +45,9 @@ public class Init implements CustomExtensionPoint {
 		}
 	}
 	
+	@Override
+	public boolean keepAfterInit() {
+		return false;
+	}
+	
 }

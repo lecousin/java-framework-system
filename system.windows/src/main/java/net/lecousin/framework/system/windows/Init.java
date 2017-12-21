@@ -31,5 +31,10 @@ public class Init implements CustomExtensionPoint {
 		Processes.setInstance(new ProcessesWin());
 		LCSystem.log.info("System initialized with Windows implementation");
 	}
+	
+	@Override
+	public boolean keepAfterInit() {
+		return false;
+	}
 
 }
