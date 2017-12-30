@@ -16,4 +16,6 @@ system.unix or system.windows depending on your operating system.
 
 ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=master "Build Status")
 
+system-api [![Javadoc](https://img.shields.io/badge/javadoc-0.2.1-brightgreen.svg)](https://www.javadoc.io/doc/net.lecousin.framework.system/system-api/0.2.1)
+
 Branch 0.2: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.2 "Build Status")
