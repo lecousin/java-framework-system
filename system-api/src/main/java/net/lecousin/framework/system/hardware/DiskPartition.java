@@ -3,8 +3,8 @@ package net.lecousin.framework.system.hardware;
 import java.io.File;
 
 import net.lecousin.framework.adapter.Adapter;
-import net.lecousin.framework.io.serialization.annotations.TypeSerializationMethod;
 import net.lecousin.framework.io.serialization.annotations.Transient;
+import net.lecousin.framework.io.serialization.annotations.TypeSerializationMethod;
 
 /** Partition on a drive. */
 public class DiskPartition {

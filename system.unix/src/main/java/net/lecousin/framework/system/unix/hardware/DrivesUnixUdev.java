@@ -281,7 +281,7 @@ public class DrivesUnixUdev extends Drives {
 				
 		PhysicalDriveUnix drive = new PhysicalDriveUnix();
 		drive.devpath = devpath;
-		drive.OSID = devnode;
+		drive.osId = devnode;
 		drive.model = model;
 		drive.version = revision;
 		drive.serial = serial;
@@ -305,7 +305,7 @@ public class DrivesUnixUdev extends Drives {
 		drive.size = size;
 		
 		readPartitions(drive);
-		newDrive(drive);
+		signalNewDrive(drive);
 	}
 
 	// TODO synchronized
@@ -345,7 +345,7 @@ public class DrivesUnixUdev extends Drives {
 			addMountPoint(p, mountsLines);
 			
 			drive.partitions.add(p);
-			newPartition(p);
+			signalNewPartition(p);
 		}
 	}
 	
@@ -437,7 +437,7 @@ public class DrivesUnixUdev extends Drives {
     			if (!found) {
     				p.drive = drive;
     				drive.partitions.add(p);
-    				newPartition(p);
+    				signalNewPartition(p);
     			}
     		}
     	} catch (Throwable t) {
@@ -445,7 +445,7 @@ public class DrivesUnixUdev extends Drives {
     	}
 	}
 	
-	private void newDrive(Drive drive) {
+	private void signalNewDrive(Drive drive) {
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);
@@ -458,7 +458,7 @@ public class DrivesUnixUdev extends Drives {
 			listener.newDrive(drive);
 	}
 	
-	private void newPartition(DiskPartition p) {
+	private void signalNewPartition(DiskPartition p) {
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);
@@ -509,7 +509,7 @@ public class DrivesUnixUdev extends Drives {
 				for (Drive d : drives) {
 					if (!(d instanceof PhysicalDriveUnix)) continue;
 					PhysicalDriveUnix drive = (PhysicalDriveUnix)d;
-					if (!tokens[0].startsWith(drive.OSID)) continue;
+					if (!tokens[0].startsWith(drive.osId)) continue;
 					boolean found = false;
 					for (DiskPartition p : drive.partitions) {
 						if (p.OSID.equals(tokens[0])) {
@@ -532,9 +532,9 @@ public class DrivesUnixUdev extends Drives {
 				dp.drive = dr;
 				dp.OSID = tokens[0];
 				dr.partitions.add(dp);
-				newPartition(dp);
+				signalNewPartition(dp);
 			} else if (newMountPoint != null)
-				newPartition(newMountPoint);
+				signalNewPartition(newMountPoint);
 		}
 	}
 	
@@ -546,7 +546,7 @@ public class DrivesUnixUdev extends Drives {
 	private static void logPhysicalDrive(PhysicalDriveUnix drive) {
 		StringBuilder s = new StringBuilder(128);
 		s.append("Drive detected: ");
-		s.append(drive.OSID);
+		s.append(drive.osId);
 		s.append(" (").append(drive.toString()).append(")");
 		s.append(" type ").append(drive.type).append(" bus ").append(drive.itype);
 		LCSystem.log.info(s.toString());

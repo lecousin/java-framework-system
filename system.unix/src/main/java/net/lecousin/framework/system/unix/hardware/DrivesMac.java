@@ -262,7 +262,7 @@ public class DrivesMac extends Drives {
 			drive.model = model;
 			drive.size = BigInteger.valueOf(size);
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
-			drive.OSID = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			drive.osId = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceVendor);
 			drive.manufacturer = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaRemovable);
@@ -307,7 +307,7 @@ public class DrivesMac extends Drives {
 		String osId = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		synchronized (drives) {
 			for (Drive d : drives)
-				if (((PhysicalDriveUnix)d).OSID != null && ((PhysicalDriveUnix)d).OSID.equals(osId)) {
+				if (((PhysicalDriveUnix)d).osId != null && ((PhysicalDriveUnix)d).osId.equals(osId)) {
 					part.drive = d;
 					break;
 				}
@@ -378,7 +378,7 @@ public class DrivesMac extends Drives {
 	}
 	
 	private void newDrive(PhysicalDriveUnix drive) {
-		LCSystem.log.info("New drive on " + drive.devpath + " (" + drive.OSID + "): " + drive);
+		LCSystem.log.info("New drive on " + drive.devpath + " (" + drive.osId + "): " + drive);
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);
@@ -396,7 +396,7 @@ public class DrivesMac extends Drives {
 	}
 	
 	private void driveRemoved(PhysicalDriveUnix drive) {
-		LCSystem.log.info("Drive removed on " + drive.devpath + " (" + drive.OSID + "): " + drive);
+		LCSystem.log.info("Drive removed on " + drive.devpath + " (" + drive.osId + "): " + drive);
 		List<DriveListener> listeners;
 		synchronized (this.listeners) {
 			listeners = new ArrayList<>(this.listeners);

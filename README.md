@@ -12,8 +12,8 @@ system.unix or system.windows depending on your operating system.
 
 ## Build status
 
-Current version: 0.2.0
+[![Maven Central](https://img.shields.io/maven-central/v/net.lecousin.framework.system/system-api.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.lecousin.framework.system%22)
 
-Master: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=master "Build Status")
+![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=master "Build Status")
 
 Branch 0.2: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.2 "Build Status")

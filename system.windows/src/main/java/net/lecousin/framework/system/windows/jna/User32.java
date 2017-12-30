@@ -18,7 +18,7 @@ public interface User32 extends com.sun.jna.platform.win32.User32 {
 	public static final User32 INSTANCE = Native.loadLibrary("user32", User32.class, W32APIOptions.UNICODE_OPTIONS);
 
 	/**
-	 * Changes an attribute of the specified window
+	 * Changes an attribute of the specified window.
 	 * @param   hWnd        A handle to the window
 	 * @param   nIndex      The zero-based offset to the value to be set.
 	 * @param   callback    The callback function for the value to be set.

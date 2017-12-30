@@ -7,6 +7,7 @@ import java.util.List;
 import net.lecousin.framework.system.hardware.DiskPartition;
 import net.lecousin.framework.system.hardware.PhysicalDrive;
 
+/** Implementation of PhysicalDrive for Unix systems. */
 public class PhysicalDriveUnix implements PhysicalDrive {
 
 	@Override
@@ -23,7 +24,7 @@ public class PhysicalDriveUnix implements PhysicalDrive {
 	}
 	
 	String devpath;
-	String OSID;
+	String osId;
 	BigInteger size;
 	String model;
 	String manufacturer;
@@ -37,7 +38,7 @@ public class PhysicalDriveUnix implements PhysicalDrive {
 	
 	@Override
 	public Object getOSId() {
-		return OSID;
+		return osId;
 	}
 	
 	@Override
