@@ -15,7 +15,10 @@ system.unix or system.windows depending on your operating system.
 [![Maven Central](https://img.shields.io/maven-central/v/net.lecousin.framework.system/system-api.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.lecousin.framework.system%22)
 
 ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=master "Build Status")
+![build status](https://ci.appveyor.com/api/projects/status/github/lecousin/java-framework-system?branch=master&svg=true "Build Status")
 
 system-api [![Javadoc](https://img.shields.io/badge/javadoc-0.2.1-brightgreen.svg)](https://www.javadoc.io/doc/net.lecousin.framework.system/system-api/0.2.1)
 
-Branch 0.2: ![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.2 "Build Status")
+Branch 0.2: 
+![build status](https://travis-ci.org/lecousin/java-framework-system.svg?branch=0.2 "Build Status")
+![build status](https://ci.appveyor.com/api/projects/status/github/lecousin/java-framework-system?branch=0.2&svg=true "Build Status")
