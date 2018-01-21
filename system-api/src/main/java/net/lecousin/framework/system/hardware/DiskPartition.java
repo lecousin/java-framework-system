@@ -9,7 +9,6 @@ import net.lecousin.framework.io.serialization.annotations.TypeSerializationMeth
 /** Partition on a drive. */
 public class DiskPartition {
 
-	// skip checkstyle: AbbreviationAsWordInName
 	// skip checkstyle: MemberName
 	public String OSID;
 	@Transient

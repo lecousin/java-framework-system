@@ -8,7 +8,7 @@
   <parent>
   	<groupId>net.lecousin</groupId>
   	<artifactId>parent-pom</artifactId>
-  	<version>0.6</version>
+  	<version>0.7</version>
   </parent>
   
   <modules>
@@ -38,7 +38,7 @@
   		<dependency>
 	  		<groupId>net.lecousin</groupId>
 	  		<artifactId>core</artifactId>
-	  		<version>0.9.12</version>
+	  		<version>0.9.13</version>
   		</dependency>
   	</dependencies>
   </dependencyManagement>
