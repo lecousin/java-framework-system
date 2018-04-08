@@ -132,7 +132,7 @@ public abstract class Drives {
 	/** Remove a listener. */
 	public abstract void removeDriveListener(DriveListener listener);
 	
-	/** Add a listener and call this listener with the current drives. */
+	/** Add a listener and call this listener with the current drives before to return. */
 	public abstract void getDrivesAndListen(DriveListener listener);
 	
 	/** Open a drive in read-only mode, in most of the system this requires administrator privileges. */
