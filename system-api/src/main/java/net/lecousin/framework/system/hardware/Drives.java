@@ -2,6 +2,7 @@ package net.lecousin.framework.system.hardware;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import net.lecousin.framework.adapter.Adapter;
@@ -134,6 +135,9 @@ public abstract class Drives {
 	
 	/** Add a listener and call this listener with the current drives before to return. */
 	public abstract void getDrivesAndListen(DriveListener listener);
+	
+	/** Return the currently registered listeners. */
+	public abstract Collection<DriveListener> getDriveListeners();
 	
 	/** Open a drive in read-only mode, in most of the system this requires administrator privileges. */
 	public abstract <T extends IO.Readable.Seekable & IO.KnownSize>

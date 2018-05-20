@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -111,6 +112,13 @@ public class DrivesWin extends Drives {
 	public void removeDriveListener(DriveListener listener) {
 		synchronized (listeners) {
 			listeners.remove(listener);
+		}
+	}
+	
+	@Override
+	public Collection<DriveListener> getDriveListeners() {
+		synchronized (listeners) {
+			return new ArrayList<>(listeners);
 		}
 	}
 	

@@ -1,0 +1,6 @@
+disk=disque
+drive=lecteur
+manufacturer=constructeur
+model=modèle
+serial number=numéro de série
+version=version

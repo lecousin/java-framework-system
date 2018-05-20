@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -80,6 +81,13 @@ public class DrivesUnixUdev extends Drives {
 	public void removeDriveListener(DriveListener listener) {
 		synchronized (listeners) {
 			listeners.remove(listener);
+		}
+	}
+	
+	@Override
+	public Collection<DriveListener> getDriveListeners() {
+		synchronized (listeners) {
+			return new ArrayList<>(listeners);
 		}
 	}
 
