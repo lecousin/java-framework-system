@@ -3,6 +3,7 @@ package net.lecousin.framework.system.windows.hardware;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
@@ -158,6 +160,8 @@ public class DrivesWin extends Drives {
 				null);
 		if (((int)Pointer.nativeValue(h.getPointer())) != -1)
 			return h;
+		if (Native.getLastError() == 5)
+			throw new AccessDeniedException(device_id);
 		/*
 		if (LCSystemWin32.win_maj_ver >= LCSystemWin32.WIN_VISTA) {
 			// we may need to elevate privileges of current process

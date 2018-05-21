@@ -11,7 +11,7 @@ import java.util.List;
 public interface PhysicalDrive extends Drive {
 
 	/** Identifier of this drive on the system. */
-	public Object getOSId();
+	public String getOSId();
 	
 	/** Manufacturer. */
 	public String getManufacturer();

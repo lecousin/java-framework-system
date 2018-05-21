@@ -45,5 +45,11 @@ public class ProcessesUnix extends Processes {
 		// TODO
 		return 0;
 	}
+	
+	@Override
+	public SeparateProcess executeCommand(String[] command, boolean elevated) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

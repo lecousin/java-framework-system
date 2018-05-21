@@ -37,7 +37,7 @@ public class PhysicalDriveUnix implements PhysicalDrive {
 	List<DiskPartition> partitions = new ArrayList<DiskPartition>();
 	
 	@Override
-	public Object getOSId() {
+	public String getOSId() {
 		return osId;
 	}
 	
