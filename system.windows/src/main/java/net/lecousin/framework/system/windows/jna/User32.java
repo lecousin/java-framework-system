@@ -4,15 +4,12 @@ import com.sun.jna.Callback;
 import com.sun.jna.Native;
 import com.sun.jna.win32.W32APIOptions;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 // skip checkstyle: TypeName
 // skip checkstyle: MethodName
 // skip checkstyle: ParameterName
 // skip checkstyle: AbbreviationAsWordInName
 // skip checkstyle: JavadocType
 // skip checkstyle: JavadocMethod
-@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
 public interface User32 extends com.sun.jna.platform.win32.User32 {
 
 	public static final User32 INSTANCE = Native.loadLibrary("user32", User32.class, W32APIOptions.UNICODE_OPTIONS);

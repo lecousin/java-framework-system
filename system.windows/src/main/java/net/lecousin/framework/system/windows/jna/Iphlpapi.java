@@ -6,8 +6,6 @@ import com.sun.jna.Native;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 // skip checkstyle: TypeName
 // skip checkstyle: MethodName
 // skip checkstyle: ParameterName
@@ -16,7 +14,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 // skip checkstyle: JavadocMethod
 public interface Iphlpapi extends StdCallLibrary {
 
-	@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
     Iphlpapi INSTANCE = Native.loadLibrary("iphlpapi", Iphlpapi.class);
     // Optional: wraps every call to the native library in a
     // synchronized block, limiting native calls to one at a time

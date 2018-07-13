@@ -3,15 +3,12 @@ package net.lecousin.framework.system.windows.jna;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.IntByReference;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 // skip checkstyle: TypeName
 // skip checkstyle: MethodName
 // skip checkstyle: ParameterName
 // skip checkstyle: AbbreviationAsWordInName
 // skip checkstyle: JavadocType
 // skip checkstyle: JavadocMethod
-@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
 public interface Kernel32 extends com.sun.jna.platform.win32.Kernel32 {
 
 	Kernel32 INSTANCE = Native.loadLibrary("kernel32", Kernel32.class);

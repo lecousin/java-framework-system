@@ -11,7 +11,6 @@ import com.jacob.com.Dispatch;
 import com.jacob.com.EnumVariant;
 import com.jacob.com.Variant;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
 import net.lecousin.framework.exception.NoException;
@@ -54,7 +53,6 @@ public class WMI extends Thread implements Closeable {
 	}
 	
 	// skip checkstyle: LocalVariableName
-	@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 	@Override
 	public void run() {
 		wmi = new ActiveXComponent("WbemScripting.SWbemLocator");

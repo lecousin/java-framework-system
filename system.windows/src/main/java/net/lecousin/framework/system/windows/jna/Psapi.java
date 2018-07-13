@@ -5,8 +5,6 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 // skip checkstyle: TypeName
 // skip checkstyle: MethodName
 // skip checkstyle: ParameterName
@@ -15,7 +13,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 // skip checkstyle: JavadocMethod
 public interface Psapi extends StdCallLibrary {
 
-	@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
     Psapi INSTANCE = Native.loadLibrary("psapi", Psapi.class);
     // Optional: wraps every call to the native library in a
     // synchronized block, limiting native calls to one at a time
