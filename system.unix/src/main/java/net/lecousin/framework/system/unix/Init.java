@@ -6,6 +6,7 @@ import com.sun.jna.Platform;
 import net.lecousin.framework.plugins.CustomExtensionPoint;
 import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.system.hardware.Drives;
+import net.lecousin.framework.system.software.Processes;
 import net.lecousin.framework.system.unix.hardware.DrivesMac;
 import net.lecousin.framework.system.unix.hardware.DrivesUnixUdev;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
@@ -15,6 +16,7 @@ import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
 import net.lecousin.framework.system.unix.jna.mac.IOKit;
 import net.lecousin.framework.system.unix.jna.mac.RunLoopThread;
 import net.lecousin.framework.system.unix.jna.mac.SystemB;
+import net.lecousin.framework.system.unix.software.ProcessesUnix;
 
 /**
  * Initialization.
@@ -43,6 +45,7 @@ public class Init implements CustomExtensionPoint {
 				LCSystem.log.error("Error loading native libraries for Linux", t);
 			}
 		}
+		Processes.setInstance(new ProcessesUnix());
 	}
 	
 	@Override
