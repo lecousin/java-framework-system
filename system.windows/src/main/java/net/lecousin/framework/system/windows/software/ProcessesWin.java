@@ -41,7 +41,7 @@ public class ProcessesWin extends Processes {
 	}
 	
 	@Override
-	public long getProccessCPUTimeNano(int id) {
+	public long getProcessCPUTimeNano(int id) {
 		HANDLE h = com.sun.jna.platform.win32.Kernel32.INSTANCE.OpenProcess(0x0400, false, id);
 		if (h == null) return -1;
 		byte[] creation = new byte[8];

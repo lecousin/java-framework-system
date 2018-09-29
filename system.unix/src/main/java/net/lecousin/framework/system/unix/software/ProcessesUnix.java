@@ -8,6 +8,10 @@ import java.util.regex.Pattern;
 import net.lecousin.framework.system.software.Processes;
 import net.lecousin.framework.system.unix.jna.LibC;
 
+/**
+ * Implementation of Processes for Unix systems.
+ *
+ */
 public class ProcessesUnix extends Processes {
 
 	@Override
@@ -41,7 +45,7 @@ public class ProcessesUnix extends Processes {
 	}
 
 	@Override
-	public long getProccessCPUTimeNano(int id) {
+	public long getProcessCPUTimeNano(int id) {
 		// TODO
 		return 0;
 	}

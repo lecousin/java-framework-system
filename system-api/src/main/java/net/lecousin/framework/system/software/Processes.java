@@ -37,11 +37,11 @@ public abstract class Processes {
 							LCSystem.log.debug("Start monitoring CPU usage");
 						lastCheckTime = System.nanoTime();
 						processId = instance.getCurrentProcessId();
-						lastCPUTime = instance.getProccessCPUTimeNano(processId);
+						lastCPUTime = instance.getProcessCPUTimeNano(processId);
 						return null;
 					}
 					long now = System.nanoTime();
-					long cpu = instance.getProccessCPUTimeNano(processId);
+					long cpu = instance.getProcessCPUTimeNano(processId);
 					long used = cpu - lastCPUTime;
 					used /= Runtime.getRuntime().availableProcessors();
 					long time = now - lastCheckTime;
@@ -77,7 +77,7 @@ public abstract class Processes {
 	public abstract void killProcess(int id) throws Exception;
 	
 	/** Return the CPU time consumed by the given process. */
-	public abstract long getProccessCPUTimeNano(int id);
+	public abstract long getProcessCPUTimeNano(int id);
 	
 	/** Launch the given command, optionally with elevated privileges. */
 	public abstract SeparateProcess executeCommand(String[] command, boolean elevatedPrivileges) throws Exception;
