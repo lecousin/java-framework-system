@@ -9,7 +9,7 @@
   	<relativePath>..</relativePath>
   </parent>
   
-	<name>lecousin.net Java framework - system</name>
+	<name>lecousin.net Java framework - system-impl</name>
 	<description>Operating system functionalities</description>
 	<url>https://github.com/lecousin/java-framework-system</url>
   
