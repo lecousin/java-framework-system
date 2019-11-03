@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.concurrent.Task;
-import net.lecousin.framework.concurrent.synch.ISynchronizationPoint;
-import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
+import net.lecousin.framework.concurrent.async.Async;
+import net.lecousin.framework.concurrent.async.IAsync;
 import net.lecousin.framework.io.FileIO;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.progress.WorkProgress;
@@ -94,19 +94,19 @@ public class DrivesUnixUdev extends Drives {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends IO.Readable.Seekable & IO.KnownSize> T openReadOnly(PhysicalDrive drive, byte priority) {
-		return (T)new FileIO.ReadOnly(new File((String)drive.getOSId()), priority);
+		return (T)new FileIO.ReadOnly(new File(drive.getOSId()), priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends IO.Writable.Seekable & IO.KnownSize> T openWriteOnly(PhysicalDrive drive, byte priority) {
-		return (T)new FileIO.WriteOnly(new File((String)drive.getOSId()), priority);
+		return (T)new FileIO.WriteOnly(new File(drive.getOSId()), priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends  IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable> T openReadWrite(PhysicalDrive drive, byte priority) {
-		return (T)new FileIO.ReadWrite(new File((String)drive.getOSId()), priority);
+		return (T)new FileIO.ReadWrite(new File(drive.getOSId()), priority);
 	}
 
 	private void initDrives(WorkProgress progress) {
@@ -158,7 +158,7 @@ public class DrivesUnixUdev extends Drives {
 		}
 		
 		private Udev.UdevHandle handle;
-		private SynchronizationPoint<Exception> closing = null;
+		private Async<Exception> closing = null;
 		
 		@Override
 		public void run() {
@@ -208,9 +208,9 @@ public class DrivesUnixUdev extends Drives {
 		}
 		
 		@Override
-		public ISynchronizationPoint<Exception> closeAsync() {
+		public IAsync<Exception> closeAsync() {
 			if (closing != null) return closing;
-			closing = new SynchronizationPoint<>();
+			closing = new Async<>();
 			return closing;
 		}
 	}
@@ -220,7 +220,7 @@ public class DrivesUnixUdev extends Drives {
 			super("Mount points Monitor");
 		}
 		
-		private SynchronizationPoint<Exception> closing = null;
+		private Async<Exception> closing = null;
 		
 		@Override
 		public void run() {
@@ -248,9 +248,9 @@ public class DrivesUnixUdev extends Drives {
 		}
 		
 		@Override
-		public ISynchronizationPoint<Exception> closeAsync() {
+		public IAsync<Exception> closeAsync() {
 			if (closing != null) return closing;
-			closing = new SynchronizationPoint<>();
+			closing = new Async<>();
 			return closing;
 		}
 	}
@@ -423,7 +423,7 @@ public class DrivesUnixUdev extends Drives {
 	
 	private void readPartitions(PhysicalDriveUnix drive) {
     	try (IO stream = openReadOnly(drive, Task.PRIORITY_IMPORTANT)) {
-    		List<DiskPartition> partitions = new ArrayList<DiskPartition>();
+    		List<DiskPartition> partitions = new ArrayList<>();
     		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
     		for (DiskPartition p : partitions) {
     			boolean found = false;

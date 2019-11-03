@@ -74,9 +74,10 @@ public class ProcessesUnix extends Processes {
 			@Override
 			public void run() {
 				try {
-					SeparateProcess.this.exitCode = p.waitFor();
+					SeparateProcess.this.exitCode = Integer.valueOf(p.waitFor());
 					terminated.fire();
 				} catch (InterruptedException e) {
+					// stop
 				} finally {
 					if (p.isAlive()) p.destroyForcibly();
 					LCCore.getApplication().closed(SeparateProcess.this);

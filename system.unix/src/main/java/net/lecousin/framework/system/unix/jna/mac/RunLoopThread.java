@@ -1,8 +1,8 @@
 package net.lecousin.framework.system.unix.jna.mac;
 
 import net.lecousin.framework.application.LCCore;
-import net.lecousin.framework.concurrent.synch.ISynchronizationPoint;
-import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
+import net.lecousin.framework.concurrent.async.IAsync;
+import net.lecousin.framework.concurrent.async.Async;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.util.AsyncCloseable;
 
@@ -23,13 +23,13 @@ public class RunLoopThread extends Thread implements AsyncCloseable<Exception> {
 		super("Mac OS - RunLoop");
 	}
 	
-	private SynchronizationPoint<Exception> start = new SynchronizationPoint<>();
-	private SynchronizationPoint<Exception> close = null;
+	private Async<Exception> start = new Async<>();
+	private Async<Exception> close = null;
 	
 	@Override
-	public ISynchronizationPoint<Exception> closeAsync() {
+	public IAsync<Exception> closeAsync() {
 		if (close != null) return close;
-		close = new SynchronizationPoint<>();
+		close = new Async<>();
 		JnaInstances.coreFoundation.CFRunLoopStop(JnaInstances.coreFoundation.CFRunLoopGetMain());
 		return close;
 	}
@@ -38,7 +38,7 @@ public class RunLoopThread extends Thread implements AsyncCloseable<Exception> {
 	public void run() {
 		start.unblock();
 		JnaInstances.coreFoundation.CFRunLoopRun();
-		if (close == null) close = new SynchronizationPoint<>(true);
+		if (close == null) close = new Async<>(true);
 		else close.unblock();
 	}
 }

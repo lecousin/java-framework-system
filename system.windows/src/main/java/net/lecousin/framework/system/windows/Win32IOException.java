@@ -28,7 +28,7 @@ public class Win32IOException extends IOException {
 		this.errorNum = errorNum;
 	}
 	
-	private int errorNum;
+	private final int errorNum;
 	
 	public int getErrorNumber() { return errorNum; }
 	

@@ -4,13 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import net.lecousin.framework.adapter.Adapter;
+import net.lecousin.framework.adapter.AdapterException;
 import net.lecousin.framework.concurrent.DrivesTaskManager;
 import net.lecousin.framework.concurrent.Task;
 import net.lecousin.framework.concurrent.Threading;
-import net.lecousin.framework.concurrent.synch.ISynchronizationPoint;
-import net.lecousin.framework.event.Listener;
+import net.lecousin.framework.concurrent.async.IAsync;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.IO.Readable.Seekable;
 import net.lecousin.framework.progress.WorkProgress;
@@ -33,28 +34,28 @@ public abstract class Drives {
 			if (instance != null) throw new IllegalStateException();
 			instance = drives;
 		}
-		ISynchronizationPoint<Exception> init = drives.initialize().getSynch();
-		init.listenInline(() -> {
+		IAsync<Exception> init = drives.initialize().getSynch();
+		init.onDone(() -> {
 			if (init.isSuccessful())
 				try {
 					Threading.getDrivesTaskManager().setDrivesProvider(new DrivesTaskManager.DrivesProvider() {
 						@Override
 						public void provide(
-							Listener<Pair<Object, List<File>>> onNewDrive,
-							Listener<Pair<Object, List<File>>> onDriveRemoved,
-							Listener<Pair<Object, File>> onNewPartition,
-							Listener<Pair<Object, File>> onPartitionRemoved
+							Consumer<Pair<Object, List<File>>> onNewDrive,
+							Consumer<Pair<Object, List<File>>> onDriveRemoved,
+							Consumer<Pair<Object, File>> onNewPartition,
+							Consumer<Pair<Object, File>> onPartitionRemoved
 						) {
 							drives.getDrivesAndListen(new DriveListenerImpl(
-								(drive) -> { onNewDrive.fire(new Pair<>(drive, drive.getMountPoints())); },
-								(drive) -> { onDriveRemoved.fire(new Pair<>(drive, drive.getMountPoints())); },
+								(drive) -> { onNewDrive.accept(new Pair<>(drive, drive.getMountPoints())); },
+								(drive) -> { onDriveRemoved.accept(new Pair<>(drive, drive.getMountPoints())); },
 								(part) -> {
 									if (part.mountPoint != null) 
-										onNewPartition.fire(new Pair<>(part.drive, part.mountPoint));
+										onNewPartition.accept(new Pair<>(part.drive, part.mountPoint));
 								},
 								(part) -> {
 									if (part.mountPoint != null)
-										onPartitionRemoved.fire(new Pair<>(part.drive, part.mountPoint));
+										onPartitionRemoved.accept(new Pair<>(part.drive, part.mountPoint));
 								}
 							));
 						}
@@ -84,8 +85,8 @@ public abstract class Drives {
 	public static class DriveListenerImpl implements DriveListener {
 		/** Constructor. */
 		public DriveListenerImpl(
-			Listener<Drive> newDrive, Listener<Drive> driveRemoved,
-			Listener<DiskPartition> newPartition, Listener<DiskPartition> partitionRemoved
+			Consumer<Drive> newDrive, Consumer<Drive> driveRemoved,
+			Consumer<DiskPartition> newPartition, Consumer<DiskPartition> partitionRemoved
 		) {
 			this.newDrive = newDrive;
 			this.driveRemoved = driveRemoved;
@@ -93,29 +94,29 @@ public abstract class Drives {
 			this.partitionRemoved = partitionRemoved;
 		}
 		
-		private Listener<Drive> newDrive;
-		private Listener<Drive> driveRemoved;
-		private Listener<DiskPartition> newPartition;
-		private Listener<DiskPartition> partitionRemoved;
+		private Consumer<Drive> newDrive;
+		private Consumer<Drive> driveRemoved;
+		private Consumer<DiskPartition> newPartition;
+		private Consumer<DiskPartition> partitionRemoved;
 		
 		@Override
 		public void newDrive(Drive drive) {
-			newDrive.fire(drive);
+			newDrive.accept(drive);
 		}
 		
 		@Override
 		public void driveRemoved(Drive drive) {
-			driveRemoved.fire(drive);
+			driveRemoved.accept(drive);
 		}
 		
 		@Override
 		public void newPartition(DiskPartition partition) {
-			newPartition.fire(partition);
+			newPartition.accept(partition);
 		}
 		
 		@Override
 		public void partitionRemoved(DiskPartition partition) {
-			partitionRemoved.fire(partition);
+			partitionRemoved.accept(partition);
 		}
 	}
 	
@@ -177,8 +178,12 @@ public abstract class Drives {
 		}
 		
 		@Override
-		public Seekable adapt(PhysicalDrive input) throws IOException {
-			return instance.openReadOnly(input, Task.PRIORITY_NORMAL);
+		public Seekable adapt(PhysicalDrive input) throws AdapterException {
+			try {
+				return instance.openReadOnly(input, Task.PRIORITY_NORMAL);
+			} catch (IOException e) {
+				throw new AdapterException("Unable to convert PhysicalDrive into Seekable", e);
+			}
 		}
 	}
 	

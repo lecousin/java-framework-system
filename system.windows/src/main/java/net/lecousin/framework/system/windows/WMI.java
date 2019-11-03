@@ -12,7 +12,7 @@ import com.jacob.com.EnumVariant;
 import com.jacob.com.Variant;
 
 import net.lecousin.framework.application.LCCore;
-import net.lecousin.framework.concurrent.synch.SynchronizationPoint;
+import net.lecousin.framework.concurrent.async.Async;
 import net.lecousin.framework.exception.NoException;
 import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.util.Triple;
@@ -41,8 +41,8 @@ public class WMI extends Thread implements Closeable {
 	private ActiveXComponent wmi;
 	private ActiveXComponent wmiconnect;
 	private boolean quit = false;
-	private LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>>
-		queries = new LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>>();
+	private LinkedList<Triple<Triple<String,String,String[]>,List<Map<String,String>>,Async<NoException>>>
+		queries = new LinkedList<>();
 	
 	@Override
 	public void close() {
@@ -63,7 +63,7 @@ public class WMI extends Thread implements Closeable {
 		Dispatch conRetDispatch = conRet.toDispatch();
 		wmiconnect = new ActiveXComponent(conRetDispatch);
 		while (!quit) {
-			Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>> p;
+			Triple<Triple<String,String,String[]>,List<Map<String,String>>,Async<NoException>> p;
 			synchronized (queries) {
 				if (queries.isEmpty())
 					try { queries.wait(); }
@@ -94,11 +94,11 @@ public class WMI extends Thread implements Closeable {
 				vColD = vCollection.toDispatch();
 				enumVariant = new EnumVariant(vColD);
 				Dispatch item = null;
-				list = new LinkedList<Map<String,String>>();
+				list = new LinkedList<>();
 				while (enumVariant.hasMoreElements()) {
 					Variant itemV = enumVariant.nextElement();
 					item = itemV.toDispatch();
-					Map<String,String> map = new HashMap<String,String>();
+					Map<String,String> map = new HashMap<>();
 					list.add(map);
 					for (int i = 0; i < fields.length; ++i) {
 						Variant value = Dispatch.call(item, fields[i]);
@@ -121,7 +121,7 @@ public class WMI extends Thread implements Closeable {
 				if (vQ != null)
 					vQ.safeRelease();
 			}
-			if (list == null) list = new LinkedList<Map<String,String>>();
+			if (list == null) list = new LinkedList<>();
 			p.setValue2(list);
 			p.getValue3().unblock();
 		}
@@ -136,10 +136,10 @@ public class WMI extends Thread implements Closeable {
 	
 	/** Query. */
 	public List<Map<String,String>> query(String className, String where, String... fields) {
-		Triple<String,String,String[]> t = new Triple<String,String,String[]>(className, where, fields);
-		SynchronizationPoint<NoException> sp = new SynchronizationPoint<NoException>();
-		Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>> 
-			p = new Triple<Triple<String,String,String[]>,List<Map<String,String>>,SynchronizationPoint<NoException>>(t, null, sp);
+		Triple<String,String,String[]> t = new Triple<>(className, where, fields);
+		Async<NoException> sp = new Async<>();
+		Triple<Triple<String,String,String[]>,List<Map<String,String>>,Async<NoException>> 
+			p = new Triple<>(t, null, sp);
 		List<Map<String,String>> list;
 		synchronized (queries) {
 			queries.add(p);

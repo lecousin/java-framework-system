@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.sun.jna.platform.win32.Shell32;
+import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 
@@ -34,7 +35,7 @@ public class ProcessesWin extends Processes {
 		IntByReference size = new IntByReference();
 		if (!Psapi.INSTANCE.EnumProcesses(buf, buf.length, size)) return null;
 		int nb = size.getValue() / 4;
-		List<Integer> list = new ArrayList<Integer>(nb);
+		List<Integer> list = new ArrayList<>(nb);
 		for (int i = 0; i < nb; ++i)
 			list.add(Integer.valueOf(DataUtil.readIntegerLittleEndian(buf, i * 4)));
 		return list;
@@ -82,13 +83,13 @@ public class ProcessesWin extends Processes {
 			@Override
 			public void run() {
 				try {
-					Kernel32.INSTANCE.WaitForSingleObject(handle, Kernel32.INFINITE);
+					Kernel32.INSTANCE.WaitForSingleObject(handle, WinBase.INFINITE);
 					synchronized (terminated) {
-						IntByReference exitCode = new IntByReference();
-						if (Kernel32.INSTANCE.GetExitCodeProcess(handle, exitCode))
-							SeparateProcess.this.exitCode = Integer.valueOf(exitCode.getValue());
+						IntByReference code = new IntByReference();
+						if (Kernel32.INSTANCE.GetExitCodeProcess(handle, code))
+							exitCode = Integer.valueOf(code.getValue());
 						else
-							SeparateProcess.this.exitCode = Integer.valueOf(9999);
+							exitCode = Integer.valueOf(9999);
 					}
 					terminated.fire();
 				} finally {

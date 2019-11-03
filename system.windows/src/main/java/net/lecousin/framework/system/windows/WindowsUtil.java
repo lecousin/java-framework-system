@@ -13,14 +13,18 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * Utilities for Windows types.
  */
-public class WindowsUtil {
+public final class WindowsUtil {
+	
+	private WindowsUtil() {
+		// no instance
+	}
 
 	/** Return a list of String from a buffer containing strings separated by 0. */
 	public static List<String> toStrings(byte[] buffer) {
         int i = 0;
     	boolean lastzero = true;
     	String s = "";
-    	List<String> list = new LinkedList<String>();
+    	List<String> list = new LinkedList<>();
     	do {
     		char c = (char)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
     		i += 2;
@@ -138,7 +142,7 @@ public class WindowsUtil {
 	
 	/** Return the values from the given Registry key. */
 	public static List<String> getValuesNames(HKEY key) {
-		List<String> names = new LinkedList<String>();
+		List<String> names = new LinkedList<>();
 		char[] name = new char[256];
 		byte[] buf = new byte[256];
 		int index = 0;

@@ -1,6 +1,5 @@
 package net.lecousin.framework.system.windows;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,11 @@ import net.lecousin.framework.system.windows.jna.User32;
 /**
  * Utilities for Windows system.
  */
-public class WindowsSystem {
+public final class WindowsSystem {
+	
+	private WindowsSystem() {
+		// no instance
+	}
 
 	/** Listener of Windows events. */
 	public static interface WindowsListener {
@@ -42,7 +45,7 @@ public class WindowsSystem {
 		synchronized (listeners) {
 			List<WindowsListener> list = listeners.get(i);
 			if (list == null) {
-				list = new ArrayList<WindowsListener>();
+				list = new ArrayList<>();
 				listeners.put(i, list);
 			}
 			list.add(listener);
@@ -53,7 +56,7 @@ public class WindowsSystem {
 
 	
 	private static HWND hWnd;
-	private static Map<Integer,List<WindowsListener>> listeners = new HashMap<Integer,List<WindowsListener>>();
+	private static Map<Integer,List<WindowsListener>> listeners = new HashMap<>();
 
 	private static final int WM_NCCREATE = 0x0081;
 	private static WinUser.WindowProc wndProc = new WinUser.WindowProc() {
@@ -62,7 +65,7 @@ public class WindowsSystem {
 			//System.out.println("Callback: "+uMsg+" / "+uParam.longValue()+" / "+lParam.longValue());
 			switch (uMsg) {
 	        case WM_NCCREATE:
-	        case User32.WM_QUIT:
+	        case WinUser.WM_QUIT:
 	            return new LRESULT(1);
 	        default:
 			}
@@ -96,7 +99,7 @@ public class WindowsSystem {
 				// create new window
 				hWnd = User32.INSTANCE
 						.CreateWindowEx(
-								User32.WS_EX_TOPMOST,
+								com.sun.jna.platform.win32.User32.WS_EX_TOPMOST,
 								windowClass,
 								"My hidden helper window, used only to catch the windows events",
 								0, 0, 0, 0, 0,
@@ -114,7 +117,7 @@ public class WindowsSystem {
 				 * DEVICE_NOTIFY_WINDOW_HANDLE to ignore the dbcc_classguid value
 				 */
 				HDEVNOTIFY hDevNotify = User32.INSTANCE.RegisterDeviceNotification(
-						hWnd, notificationFilter, User32.DEVICE_NOTIFY_WINDOW_HANDLE);
+						hWnd, notificationFilter, com.sun.jna.platform.win32.User32.DEVICE_NOTIFY_WINDOW_HANDLE);
 
 				MSG msg = new MSG();
 				while (User32.INSTANCE.GetMessage(msg, hWnd, 0, 0xFFFF) != 0) {
@@ -128,12 +131,7 @@ public class WindowsSystem {
 				User32.INSTANCE.DestroyWindow(hWnd);
 			}
 		}.start();
-		LCCore.get().toClose(new Closeable() {
-			@Override
-			public void close() {
-				User32.INSTANCE.PostMessage(hWnd, User32.WM_QUIT, new WPARAM(0), new LPARAM(0));
-			}
-		});
+		LCCore.get().toClose(() -> User32.INSTANCE.PostMessage(hWnd, WinUser.WM_QUIT, new WPARAM(0), new LPARAM(0)));
 	}
 
 }

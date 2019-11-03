@@ -14,8 +14,6 @@ import java.util.Map;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.WinDef.LPARAM;
-import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
@@ -70,18 +68,14 @@ public class DrivesWin extends Drives {
 	private static final int DBT_DEVICE_ARRIVAL = 0x8000;
 	private static final int DBT_DEVICE_REMOVECOMPLETE = 0x8004;
 	private static final int DBT_DEVNODES_CHANGED = 0x0007; // A device has been added to or removed from the system.
-	private WindowsSystem.WindowsListener deviceChangeListener = new WindowsSystem.WindowsListener() {
-		// skip checkstyle: ParameterName
-		@Override
-		public void fire(int eventId, WPARAM uParam, LPARAM lParam) {
-			switch (uParam.intValue()) {
-			case DBT_DEVICE_ARRIVAL:
-			case DBT_DEVICE_REMOVECOMPLETE:
-			case DBT_DEVNODES_CHANGED: // without this one, sometimes USB are not detected
-				loadDrives(null);
-				break;
-			default: break;
-			}
+	private WindowsSystem.WindowsListener deviceChangeListener = (eventId, uParam, lParam) -> {
+		switch (uParam.intValue()) {
+		case DBT_DEVICE_ARRIVAL:
+		case DBT_DEVICE_REMOVECOMPLETE:
+		case DBT_DEVNODES_CHANGED: // without this one, sometimes USB are not detected
+			loadDrives(null);
+			break;
+		default: break;
 		}
 	};
 
@@ -149,9 +143,9 @@ public class DrivesWin extends Drives {
 		throw new IOException("Write not supported");
 	}
 
-	private static HANDLE openDevice(String device_id, boolean readable, boolean writable) throws IOException {
+	private static HANDLE openDevice(String deviceId, boolean readable, boolean writable) throws IOException {
 		HANDLE h = com.sun.jna.platform.win32.Kernel32.INSTANCE.CreateFile(
-				"\\\\.\\" + device_id, 
+				"\\\\.\\" + deviceId, 
 				(writable ? WinNT.GENERIC_WRITE : 0) | (readable ? 0x80000000 : 0), 
 				3, // read and write allowed 
 				null, 
@@ -161,7 +155,7 @@ public class DrivesWin extends Drives {
 		if (((int)Pointer.nativeValue(h.getPointer())) != -1)
 			return h;
 		if (Native.getLastError() == 5)
-			throw new AccessDeniedException(device_id);
+			throw new AccessDeniedException(deviceId);
 		/*
 		if (LCSystemWin32.win_maj_ver >= LCSystemWin32.WIN_VISTA) {
 			// we may need to elevate privileges of current process
@@ -184,11 +178,12 @@ public class DrivesWin extends Drives {
 			stepRoots = progress.getRemainingWork() / 5;
 			stepDevices = progress.getRemainingWork() / 5;
 			stepWMI = progress.getRemainingWork() - stepRoots - stepDevices;
-		} else
+		} else {
 			stepRoots = stepDevices = stepWMI = 0;
+		}
 
 		// list mounted partitions
-		Map<String,File> rootsNames = new HashMap<String,File>();
+		Map<String,File> rootsNames = new HashMap<>();
 		File[] roots = File.listRoots();
 		int nbSteps = roots.length;
 		if (progress != null) {
@@ -209,14 +204,16 @@ public class DrivesWin extends Drives {
             	if (ss.size() == 1) {
             		rootsNames.put(ss.get(0), root);
             		if (LCSystem.log.debug()) LCSystem.log.debug("Mount point " + root.getAbsolutePath() + " is on device " + ss.get(0));
-            	} else
+            	} else {
             		if (LCSystem.log.error())
             			LCSystem.log.error("Unexpected response for mount point " + root.getAbsolutePath() + ": "
             				+ ss.size() + " strings, 1 expected");
-            } else
+            	}
+            } else {
             	if (LCSystem.log.error())
             		LCSystem.log.error("Unable to get information about mount point " + root.getAbsolutePath() + ": "
             			+ Win32IOException.getLastError());
+            }
             if (progress != null) progress.progress(step);
 		}
 
@@ -235,7 +232,7 @@ public class DrivesWin extends Drives {
         	progress.progress(step);
         }
 
-        List<Drive> drives = new LinkedList<Drive>();
+        List<Drive> drives = new LinkedList<>();
         for (String deviceId : devices) {
         	long step = stepDevices / nbSteps--;
         	stepDevices -= step;
@@ -268,14 +265,16 @@ public class DrivesWin extends Drives {
                         			LCSystem.log.debug(partition.mountPoint != null
                         				? "Mount point found: " + partition.mountPoint.getAbsolutePath()
                         				: "No mount point for " + ss.get(0));
-                        	} else
+                        	} else {
                         		if (LCSystem.log.error())
                         			LCSystem.log.error("Unexpected response for " + volumeId + ": "
                         				+ ss.size() + " strings, 1 expected");
-                        } else
+                        	}
+                        } else {
                         	if (LCSystem.log.error())
                         		LCSystem.log.error("Error retrieving device name for " + volumeId + ": "
                         			+ Win32IOException.getLastError());
+                        }
                         try {
                         	// TODO in parallel?
 	                        HANDLE h = openDevice(volumeId, false, false);
@@ -325,15 +324,16 @@ public class DrivesWin extends Drives {
                 			LCSystem.log.debug(partition.mountPoint != null
                 				? "Mount point found: " + partition.mountPoint.getAbsolutePath()
                 				: "No mount point for " + ss.get(0));
-                	} else
+                	} else {
                 		if (LCSystem.log.error())
                 			LCSystem.log.error("Unexpected response for " + deviceId + ": "
                 				+ ss.size() + " strings, 1 expected");
-                } else
+                	}
+                } else {
                 	if (LCSystem.log.error())
                 		LCSystem.log.error("Error retrieving device name for " + deviceId + ": "
                 			+ Win32IOException.getLastError());
-
+                }
         	} else {
         		//System.out.println("Device ignored: " + device_id);
         	}
@@ -396,7 +396,7 @@ public class DrivesWin extends Drives {
 
         	// fill partition information
         	try (IO stream = openReadOnly(drive, Task.PRIORITY_IMPORTANT)) {
-	    		List<DiskPartition> partitions = new ArrayList<DiskPartition>();
+	    		List<DiskPartition> partitions = new ArrayList<>();
 	    		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
 	    		for (DiskPartition p : partitions) {
 	    			boolean found = false;
@@ -449,7 +449,8 @@ public class DrivesWin extends Drives {
 
         fillDrivesFromWmic(drives);
 		checkSerial(drives);
-		if (progress != null) progress.progress(stepWMI);
+		if (progress != null)
+			progress.progress(stepWMI);
 		
         synchronized (this.drives) {
         	// check removed

@@ -34,7 +34,7 @@ public class PhysicalDriveUnix implements PhysicalDrive {
 	InterfaceType itype;
 	boolean removable;
 	
-	List<DiskPartition> partitions = new ArrayList<DiskPartition>();
+	List<DiskPartition> partitions = new ArrayList<>();
 	
 	@Override
 	public String getOSId() {

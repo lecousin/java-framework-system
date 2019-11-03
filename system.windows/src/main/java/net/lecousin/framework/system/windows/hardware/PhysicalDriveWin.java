@@ -71,10 +71,10 @@ public class PhysicalDriveWin implements PhysicalDrive {
 	Type type;
 	Map<String,Object> infos;
 	
-	List<DiskPartition> partitions = new ArrayList<DiskPartition>();
+	List<DiskPartition> partitions = new ArrayList<>();
 	
 	@Override
-	public boolean equals(Object obj) { return obj instanceof PhysicalDriveWin ? osId.equals(((PhysicalDriveWin)obj).osId) : false; }
+	public boolean equals(Object obj) { return (obj instanceof PhysicalDriveWin) && osId.equals(((PhysicalDriveWin)obj).osId); }
 	
 	@Override
 	public int hashCode() { return osId.hashCode(); }
