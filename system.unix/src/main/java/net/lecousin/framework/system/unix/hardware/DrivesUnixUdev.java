@@ -195,7 +195,7 @@ public class DrivesUnixUdev extends Drives {
 					} else if ("remove".equals(action)) {
 						deviceRemoved(udev, device);
 					}
-				} catch (Throwable t) {
+				} catch (Exception t) {
 					LCSystem.log.error("Error analyzing device", t);
 				} finally {
 					udev.udev_device_unref(device);
@@ -238,7 +238,7 @@ public class DrivesUnixUdev extends Drives {
 					LCSystem.log.info("Mount points file changed.");
 					List<String[]> mounts = readMounts();
 					addAdditionalPartitions(mounts);
-				} catch (Throwable t) {
+				} catch (Exception t) {
 					LCSystem.log.error("Error analyzing mount points", t);
 				}
 			}
@@ -448,7 +448,7 @@ public class DrivesUnixUdev extends Drives {
     				signalNewPartition(p);
     			}
     		}
-    	} catch (Throwable t) {
+    	} catch (Exception t) {
     		// TODO
     	}
 	}
@@ -467,12 +467,12 @@ public class DrivesUnixUdev extends Drives {
 	}
 	
 	private void signalNewPartition(DiskPartition p) {
-		List<DriveListener> listeners;
+		List<DriveListener> listenersToCall;
 		synchronized (this.listeners) {
-			listeners = new ArrayList<>(this.listeners);
+			listenersToCall = new ArrayList<>(this.listeners);
 		}
 		logPartition(p);
-		for (DriveListener listener : listeners)
+		for (DriveListener listener : listenersToCall)
 			listener.newPartition(p);
 	}
 	
@@ -492,7 +492,7 @@ public class DrivesUnixUdev extends Drives {
 				result.add(tokens);
 			}
 			return result;
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			LCSystem.log.error("Unable to parse /proc/self/mounts", t);
 			return null;
 		}
@@ -541,8 +541,9 @@ public class DrivesUnixUdev extends Drives {
 				dp.OSID = tokens[0];
 				dr.partitions.add(dp);
 				signalNewPartition(dp);
-			} else if (newMountPoint != null)
+			} else if (newMountPoint != null) {
 				signalNewPartition(newMountPoint);
+			}
 		}
 	}
 	

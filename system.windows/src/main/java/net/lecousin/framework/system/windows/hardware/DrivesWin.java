@@ -281,10 +281,10 @@ public class DrivesWin extends Drives {
 	                		buffer = new byte[4096];
 	                		IntByReference nb = new IntByReference(0);
 	                        if (lib.DeviceIoControl(h, WindowsUtil.IOCTL_DISK_GET_PARTITION_INFO_EX, null, 0, buffer, buffer.length, nb, null)) {
-	                        	partition.start = DataUtil.readLongLittleEndian(buffer, 5);
-	                        	partition.size = DataUtil.readLongLittleEndian(buffer, 13);
-	                        	partition.partitionSlotIndex = DataUtil.readIntegerLittleEndian(buffer, 21);
-	                        	int style = DataUtil.readIntegerLittleEndian(buffer, 1);
+	                        	partition.start = DataUtil.Read64.LE.read(buffer, 5);
+	                        	partition.size = DataUtil.Read64.LE.read(buffer, 13);
+	                        	partition.partitionSlotIndex = DataUtil.Read32.LE.read(buffer, 21);
+	                        	int style = DataUtil.Read32.LE.read(buffer, 1);
 	                        	switch (style) {
 	                        	case 0: // MBR
 	                        		partition.type = (short)(buffer[0x20] & 0xFF);
@@ -356,13 +356,13 @@ public class DrivesWin extends Drives {
 	    		if (res) {
 	        		drive.removable = buffer[10] != 0;
 	        		int off;
-	        		off = DataUtil.readIntegerLittleEndian(buffer, 12);
+	        		off = DataUtil.Read32.LE.read(buffer, 12);
 	        		if (off > 0) drive.manufacturer = WindowsUtil.toStringAscii(buffer, off);
-	        		off = DataUtil.readIntegerLittleEndian(buffer, 16);
+	        		off = DataUtil.Read32.LE.read(buffer, 16);
 	        		if (off > 0) drive.model = WindowsUtil.toStringAscii(buffer, off);
-	        		off = DataUtil.readIntegerLittleEndian(buffer, 20);
+	        		off = DataUtil.Read32.LE.read(buffer, 20);
 	        		if (off > 0) drive.version = WindowsUtil.toStringAscii(buffer, off);
-	        		off = DataUtil.readIntegerLittleEndian(buffer, 24);
+	        		off = DataUtil.Read32.LE.read(buffer, 24);
 	        		if (off > 0) drive.serial = WindowsUtil.toStringAscii(buffer, off);
 	        		// skip checkstyle: OneStatementPerLine
 	        		switch (buffer[28]) {

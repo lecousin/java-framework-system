@@ -136,24 +136,12 @@ public class DrivesMac extends Drives {
 		bsdNamesMountPoints = null;
 		diskImages = null;
 
-		da.DARegisterDiskAppearedCallback(session, null, new DADiskAppearedCallback() {
-			@Override
-			public void callback(DADiskRef disk, Pointer context) {
-				newDisk(disk, new Mutable<>(null), new Mutable<>(null));
-			}
-		}, null);
-		da.DARegisterDiskDescriptionChangedCallback(session, null, null, new DADiskDescriptionChangedCallback() {
-			@Override
-			public void callback(DADiskRef disk, CFArrayRef keys, Pointer context) {
-				// TODO diskChanged(disk);
-			}
-		}, null);
-		da.DARegisterDiskDisappearedCallback(session, null, new DADiskDisappearedCallback() {
-			@Override
-			public void callback(DADiskRef disk, Pointer context) {
-				diskRemoved(disk);
-			}
-		}, null);
+		da.DARegisterDiskAppearedCallback(session, null,
+			(disk, context) -> newDisk(disk, new Mutable<>(null), new Mutable<>(null)), null);
+		da.DARegisterDiskDescriptionChangedCallback(session, null, null, 
+			(disk, keys, context) -> { /* TODO diskChanged(disk);*/ }, null);
+		da.DARegisterDiskDisappearedCallback(session, null,
+			(disk, context) -> diskRemoved(disk), null);
 		
 		da.DASessionScheduleWithRunLoop(
 			session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode")
@@ -180,7 +168,7 @@ public class DrivesMac extends Drives {
 			ProcessUtil.consumeProcessConsole(process, (line) -> { lines.add(line); }, (line) -> { });
 			int exitCode = process.waitFor();
 			if (exitCode != 0) return infos;
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			LCSystem.log.error("Error running command hdiutil info", t);
 			return infos;
 		}
@@ -387,9 +375,9 @@ public class DrivesMac extends Drives {
 	
 	private void newDrive(PhysicalDriveUnix drive) {
 		LCSystem.log.info("New drive on " + drive.devpath + " (" + drive.osId + "): " + drive);
-		List<DriveListener> listeners;
+		List<DriveListener> listenersToCall;
 		synchronized (this.listeners) {
-			listeners = new ArrayList<>(this.listeners);
+			listenersToCall = new ArrayList<>(this.listeners);
 		}
 		synchronized (drives) {
 			for (Drive d : drives)
@@ -399,37 +387,37 @@ public class DrivesMac extends Drives {
 				}
 			drives.add(drive);
 		}
-		for (DriveListener listener : listeners)
+		for (DriveListener listener : listenersToCall)
 			listener.newDrive(drive);
 	}
 	
 	private void driveRemoved(PhysicalDriveUnix drive) {
 		LCSystem.log.info("Drive removed on " + drive.devpath + " (" + drive.osId + "): " + drive);
-		List<DriveListener> listeners;
+		List<DriveListener> listenersToCall;
 		synchronized (this.listeners) {
-			listeners = new ArrayList<>(this.listeners);
+			listenersToCall = new ArrayList<>(this.listeners);
 		}
-		for (DriveListener listener : listeners)
+		for (DriveListener listener : listenersToCall)
 			listener.driveRemoved(drive);
 	}
 	
 	private void newPartition(DiskPartition part) {
 		LCSystem.log.info("New partition: " + part);
-		List<DriveListener> listeners;
+		List<DriveListener> listenersToCall;
 		synchronized (this.listeners) {
-			listeners = new ArrayList<>(this.listeners);
+			listenersToCall = new ArrayList<>(this.listeners);
 		}
-		for (DriveListener listener : listeners)
+		for (DriveListener listener : listenersToCall)
 			listener.newPartition(part);
 	}
 	
 	private void partitionRemoved(DiskPartition part) {
 		LCSystem.log.info("Partition removed: " + part);
-		List<DriveListener> listeners;
+		List<DriveListener> listenersToCall;
 		synchronized (this.listeners) {
-			listeners = new ArrayList<>(this.listeners);
+			listenersToCall = new ArrayList<>(this.listeners);
 		}
-		for (DriveListener listener : listeners)
+		for (DriveListener listener : listenersToCall)
 			listener.partitionRemoved(part);
 	}
 	

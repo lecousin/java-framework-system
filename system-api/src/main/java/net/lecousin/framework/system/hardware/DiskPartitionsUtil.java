@@ -8,7 +8,7 @@ import java.util.List;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.util.DataUtil;
 import net.lecousin.framework.system.LCSystem;
-import net.lecousin.framework.util.StringUtil;
+import net.lecousin.framework.text.StringUtil;
 
 /**
  * Utility methods for a disk partition.
@@ -47,8 +47,8 @@ public class DiskPartitionsUtil {
 				p.endHead = (short)(b[i * 16 + 5] & 0xFF);
 				p.endSector = (short)(b[i * 16 + 6] & 0x3F);
 				p.endCylinder = (b[i * 16 + 7] & 0xFF) | ((b[i * 16 + 6] & 0xC0) << 2);
-				p.lba = DataUtil.readIntegerLittleEndian(b, i * 16 + 8) & 0xFFFFFFFFL;
-				p.nbSectors = DataUtil.readIntegerLittleEndian(b, i * 16 + 12) & 0xFFFFFFFFL;
+				p.lba = DataUtil.Read32.LE.read(b, i * 16 + 8) & 0xFFFFFFFFL;
+				p.nbSectors = DataUtil.Read32.LE.read(b, i * 16 + 12) & 0xFFFFFFFFL;
 				if (p.lba == 0) {
 					if (LCSystem.log.error()) LCSystem.log.error("Cannot determine partition position for index " + (i + 1));
 					continue;

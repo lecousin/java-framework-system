@@ -37,7 +37,7 @@ public class ProcessesWin extends Processes {
 		int nb = size.getValue() / 4;
 		List<Integer> list = new ArrayList<>(nb);
 		for (int i = 0; i < nb; ++i)
-			list.add(Integer.valueOf(DataUtil.readIntegerLittleEndian(buf, i * 4)));
+			list.add(Integer.valueOf(DataUtil.Read32.LE.read(buf, i * 4)));
 		return list;
 	}
 	
@@ -53,7 +53,7 @@ public class ProcessesWin extends Processes {
 		com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
 		if (!res) return -1;
 		// times are in 100-nanoseconds units, so we multiply it by 100 to get an approximation of nanoseconds
-		return (DataUtil.readLongLittleEndian(kernel, 0) + DataUtil.readLongLittleEndian(user, 0)) * 100;
+		return (DataUtil.Read64.LE.read(kernel, 0) + DataUtil.Read64.LE.read(user, 0)) * 100;
 	}
 	
 	@Override
