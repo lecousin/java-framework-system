@@ -9,12 +9,13 @@ import java.util.function.Consumer;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 
-import net.lecousin.framework.concurrent.Task;
-import net.lecousin.framework.concurrent.TaskManager;
-import net.lecousin.framework.concurrent.Threading;
 import net.lecousin.framework.concurrent.async.Async;
 import net.lecousin.framework.concurrent.async.AsyncSupplier;
 import net.lecousin.framework.concurrent.async.IAsync;
+import net.lecousin.framework.concurrent.threads.Task;
+import net.lecousin.framework.concurrent.threads.Task.Priority;
+import net.lecousin.framework.concurrent.threads.TaskManager;
+import net.lecousin.framework.concurrent.threads.Threading;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.IOUtil;
 import net.lecousin.framework.system.windows.jna.Kernel32;
@@ -34,10 +35,10 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	private BigInteger deviceSize;
 	private String name;
 	private Object taskManagerResource;
-	private byte priority;
+	private Priority priority;
 	
 	/** Constructor. */
-	public Win32HandleStream(HANDLE h, BigInteger size, String name, Object taskManagerResource, byte priority) { 
+	public Win32HandleStream(HANDLE h, BigInteger size, String name, Object taskManagerResource, Priority priority) { 
 		this.h = h; 
 		this.deviceSize = size;
 		this.name = name;
@@ -86,10 +87,10 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	*/
 	
 	@Override
-	public byte getPriority() { return priority; }
+	public Priority getPriority() { return priority; }
 	
 	@Override
-	public void setPriority(byte priority) { this.priority = priority; }
+	public void setPriority(Priority priority) { this.priority = priority; }
 	
 	@Override
 	public TaskManager getTaskManager() {
@@ -141,27 +142,24 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	
 	@Override
 	public AsyncSupplier<Integer,IOException> readAsync(ByteBuffer buffer, Consumer<Pair<Integer,IOException>> ondone) {
-		Task<Integer,IOException> t = new Task<Integer,IOException>(this.taskManagerResource, "Read", priority, ondone) {
-			@Override
-			public Integer run() throws IOException {
-				if (buffer.remaining() == 0) return Integer.valueOf(0);
-				if (sectorPos == 512) {
-					//if (sector_modified) flush_sector();
-					sector++;
-					sectorPos = 0;
-					sectorReady = false;
-				}
-				if (!sectorReady)
-					try { readSector(); }
-					catch (EOFException e) { return Integer.valueOf(0); }
-					catch (IOException e) { throw e; }
-				int l = 512 - sectorPos;
-				if (l > buffer.remaining()) l = buffer.remaining();
-				buffer.put(Win32HandleStream.this.buffer, sectorPos, l);
-				sectorPos += l;
-				return Integer.valueOf(l);
+		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, () -> {
+			if (buffer.remaining() == 0) return Integer.valueOf(0);
+			if (sectorPos == 512) {
+				//if (sector_modified) flush_sector();
+				sector++;
+				sectorPos = 0;
+				sectorReady = false;
 			}
-		};
+			if (!sectorReady)
+				try { readSector(); }
+				catch (EOFException e) { return Integer.valueOf(0); }
+				catch (IOException e) { throw e; }
+			int l = 512 - sectorPos;
+			if (l > buffer.remaining()) l = buffer.remaining();
+			buffer.put(Win32HandleStream.this.buffer, sectorPos, l);
+			sectorPos += l;
+			return Integer.valueOf(l);
+		}, ondone);
 		operation(t.start());
 		return t.getOutput();
 	}
@@ -174,38 +172,35 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	
 	@Override
 	public AsyncSupplier<Integer,IOException> readFullyAsync(ByteBuffer buffer, Consumer<Pair<Integer,IOException>> ondone) {
-		Task<Integer,IOException> t = new Task<Integer,IOException>(this.taskManagerResource, "Read", priority, ondone) {
-			@Override
-			public Integer run() throws IOException {
-				if (buffer.remaining() == 0) return Integer.valueOf(0);
-				if (sectorPos == 512) {
-					//if (sector_modified) flush_sector();
-					sector++;
-					sectorPos = 0;
-					sectorReady = false;
-				}
-				if (!sectorReady)
-					try { readSector(); }
-					catch (EOFException e) { return Integer.valueOf(0); }
-					catch (IOException e) { throw e; }
-				int total = 0;
-				do {
-					int l = 512 - sectorPos;
-					if (l > buffer.remaining()) l = buffer.remaining();
-					buffer.put(Win32HandleStream.this.buffer, sectorPos, l);
-					total += l;
-					sectorPos += l;
-					if (buffer.remaining() == 0) break;
-					//if (sector_modified) flush_sector();
-					sectorPos = 0;
-					sector++;
-					try { readSector(); }
-					catch (EOFException e) { break; }
-					catch (IOException e) { throw e; }
-				} while (true);
-				return Integer.valueOf(total);
+		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, () -> {
+			if (buffer.remaining() == 0) return Integer.valueOf(0);
+			if (sectorPos == 512) {
+				//if (sector_modified) flush_sector();
+				sector++;
+				sectorPos = 0;
+				sectorReady = false;
 			}
-		};
+			if (!sectorReady)
+				try { readSector(); }
+				catch (EOFException e) { return Integer.valueOf(0); }
+				catch (IOException e) { throw e; }
+			int total = 0;
+			do {
+				int l = 512 - sectorPos;
+				if (l > buffer.remaining()) l = buffer.remaining();
+				buffer.put(Win32HandleStream.this.buffer, sectorPos, l);
+				total += l;
+				sectorPos += l;
+				if (buffer.remaining() == 0) break;
+				//if (sector_modified) flush_sector();
+				sectorPos = 0;
+				sector++;
+				try { readSector(); }
+				catch (EOFException e) { break; }
+				catch (IOException e) { throw e; }
+			} while (true);
+			return Integer.valueOf(total);
+		}, ondone);
 		operation(t.start());
 		return t.getOutput();
 	}

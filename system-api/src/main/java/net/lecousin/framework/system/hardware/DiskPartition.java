@@ -3,18 +3,14 @@ package net.lecousin.framework.system.hardware;
 import java.io.File;
 
 import net.lecousin.framework.adapter.Adapter;
-import net.lecousin.framework.io.serialization.annotations.Transient;
-import net.lecousin.framework.io.serialization.annotations.TypeSerializationMethod;
 
 /** Partition on a drive. */
 public class DiskPartition {
 
 	// skip checkstyle: MemberName
 	public String OSID;
-	@Transient
 	public Drive drive;
 	public int index;
-	@TypeSerializationMethod("getAbsolutePath")
 	public File mountPoint;
 	public String filesystem;
 	public String name;

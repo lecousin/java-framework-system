@@ -11,37 +11,37 @@ import java.util.List;
 public interface PhysicalDrive extends Drive {
 
 	/** Identifier of this drive on the system. */
-	public String getOSId();
+	String getOSId();
 	
 	/** Manufacturer. */
-	public String getManufacturer();
+	String getManufacturer();
 
 	/** Model. */
-	public String getModel();
+	String getModel();
 	
 	/** Version. */
-	public String getVersion();
+	String getVersion();
 	
 	/** Serial number. */
-	public String getSerialNumber();
+	String getSerialNumber();
 	
 	/** Return true if this is a removable drive such as DVD. */
-	public boolean isRemovable();
+	boolean isRemovable();
 	
 	/** Return the total capacity of this drive. */
-	public BigInteger getSize();
+	BigInteger getSize();
 	
 	/** Return the type of interface. */
-	public InterfaceType getInterface();
+	InterfaceType getInterface();
 	
 	/** Return the type of drive. */
-	public Type getType();
+	Type getType();
 	
 	/** List of partitions on this drive. */
-	public List<DiskPartition> getPartitions();
+	List<DiskPartition> getPartitions();
 	
 	@Override
-	public default List<File> getMountPoints() {
+	default List<File> getMountPoints() {
 		LinkedList<File> list = new LinkedList<>();
 		for (DiskPartition p : getPartitions())
 			if (p.mountPoint != null)
@@ -49,8 +49,20 @@ public interface PhysicalDrive extends Drive {
 		return list;
 	}
 	
+	@Override
+	default boolean supportConcurrentAccess() {
+		switch (getType()) {
+		case FLASH:
+		case SDD:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	
 	/** Types of interface. */
-	public static enum InterfaceType {
+	enum InterfaceType {
 		Unknown,
 		SCSI, ATAPI, ATA, IEEE1394,
 		SSA, Fibre, USB, RAID, iSCSI, SAS, SATA,
@@ -58,7 +70,7 @@ public interface PhysicalDrive extends Drive {
 	}
 	
 	/** Types of drive. */
-	public static enum Type {
+	enum Type {
 		UNKNOWN, HARDDISK, CDROM, FLOPPY, FLASH, SDD
 	}
 	

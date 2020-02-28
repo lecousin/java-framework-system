@@ -71,7 +71,7 @@ public class ProcessesWin extends Processes {
 			thread = app.getThreadFactory().newThread(new WaitFor());
 			thread.setName("Wait for process to terminate: " + command);
 			thread.start();
-			app.toClose(this);
+			app.toClose(1, this);
 		}
 		
 		private HANDLE handle;

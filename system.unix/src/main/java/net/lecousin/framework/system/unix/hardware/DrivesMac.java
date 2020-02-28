@@ -14,6 +14,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 import net.lecousin.framework.application.LCCore;
+import net.lecousin.framework.concurrent.threads.Task.Priority;
 import net.lecousin.framework.io.IO.KnownSize;
 import net.lecousin.framework.io.IO.Readable.Seekable;
 import net.lecousin.framework.mutable.Mutable;
@@ -27,14 +28,10 @@ import net.lecousin.framework.system.hardware.PhysicalDrive;
 import net.lecousin.framework.system.hardware.PhysicalDrive.InterfaceType;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFArrayRef;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFDictionaryRef;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFMutableDictionaryRef;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFStringRef;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskAppearedCallback;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskDescriptionChangedCallback;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskDisappearedCallback;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskRef;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DASessionRef;
 import net.lecousin.framework.system.unix.jna.mac.IOKit;
@@ -477,21 +474,21 @@ public class DrivesMac extends Drives {
 	}
 
 	@Override
-	public <T extends Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, byte priority) throws IOException {
+	public <T extends Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) throws IOException {
 		// TODO
 		throw new IOException("Open drive not supported on MAC by library net.lecousin.system.unix");
 	}
 
 	@Override
 	public <T extends net.lecousin.framework.io.IO.Writable.Seekable & KnownSize> T
-	openWriteOnly(PhysicalDrive drive, byte priority) throws IOException {
+	openWriteOnly(PhysicalDrive drive, Priority priority) throws IOException {
 		// TODO
 		throw new IOException("Open drive not supported on MAC by library net.lecousin.system.unix");
 	}
 
 	@Override
 	public <T extends Seekable & KnownSize & net.lecousin.framework.io.IO.Writable.Seekable> T
-	openReadWrite(PhysicalDrive drive, byte priority) throws IOException {
+	openReadWrite(PhysicalDrive drive, Priority priority) throws IOException {
 		// TODO
 		throw new IOException("Open drive not supported on MAC by library net.lecousin.system.unix");
 	}

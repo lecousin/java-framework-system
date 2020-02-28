@@ -19,8 +19,9 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 
-import net.lecousin.framework.concurrent.Task;
-import net.lecousin.framework.concurrent.Threading;
+import net.lecousin.framework.concurrent.threads.Task;
+import net.lecousin.framework.concurrent.threads.Task.Priority;
+import net.lecousin.framework.concurrent.threads.Threading;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.IO.KnownSize;
 import net.lecousin.framework.io.IO.Readable;
@@ -120,12 +121,12 @@ public class DrivesWin extends Drives {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Readable.Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, byte priority) throws IOException {
+	public <T extends Readable.Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) throws IOException {
 		if (!(drive instanceof PhysicalDriveWin)) throw new IOException("Invalid drive");
 		PhysicalDriveWin d = (PhysicalDriveWin)drive;
 		HANDLE h = openDevice(d.osId, true, false);
 		Object taskManagerResource = Threading.CPU;
-		for (Object o : Threading.getDrivesTaskManager().getResources())
+		for (Object o : Threading.getDrivesManager().getResources())
 			if (o == drive) {
 				taskManagerResource = o;
 				break;
@@ -134,12 +135,13 @@ public class DrivesWin extends Drives {
 	}
 	
 	@Override
-	public <T extends Readable.Seekable & KnownSize & Writable.Seekable> T openReadWrite(PhysicalDrive drive, byte priority) throws IOException {
+	public <T extends Readable.Seekable & KnownSize & Writable.Seekable> T openReadWrite(PhysicalDrive drive, Priority priority)
+	throws IOException {
 		throw new IOException("Write not supported");
 	}
 	
 	@Override
-	public <T extends Writable.Seekable & KnownSize> T openWriteOnly(PhysicalDrive drive, byte priority) throws IOException {
+	public <T extends Writable.Seekable & KnownSize> T openWriteOnly(PhysicalDrive drive, Priority priority) throws IOException {
 		throw new IOException("Write not supported");
 	}
 
@@ -395,7 +397,7 @@ public class DrivesWin extends Drives {
         	}
 
         	// fill partition information
-        	try (IO stream = openReadOnly(drive, Task.PRIORITY_IMPORTANT)) {
+        	try (IO stream = openReadOnly(drive, Task.Priority.IMPORTANT)) {
 	    		List<DiskPartition> partitions = new ArrayList<>();
 	    		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
 	    		for (DiskPartition p : partitions) {

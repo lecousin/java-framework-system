@@ -2,7 +2,8 @@ package net.lecousin.framework.system.software;
 
 import java.util.List;
 
-import net.lecousin.framework.concurrent.Task;
+import net.lecousin.framework.concurrent.Executable;
+import net.lecousin.framework.concurrent.threads.Task;
 import net.lecousin.framework.exception.NoException;
 import net.lecousin.framework.system.LCSystem;
 
@@ -21,16 +22,15 @@ public abstract class Processes {
 			if (instance != null) throw new IllegalStateException();
 			instance = processes;
 
-			Task<Void,NoException> task = new Task.Cpu<Void,NoException>(
-				"Checking idle time of the application", Task.PRIORITY_BACKGROUND
-			) {
+			Task<Void,NoException> task = Task.cpu("Checking idle time of the application", Task.Priority.BACKGROUND,
+				new Executable<Void, NoException>() {
 				private long lastCheckTime = -1;
 				private long lastCPUTime;
 				private int processId;
 				private double[] usageLast10Minutes = new double[10];
 				private int minute = 0;
 				@Override
-				public Void run() {
+				public Void execute() {
 					if (lastCheckTime < 0) {
 						// first time we execute
 						if (LCSystem.log.debug())
@@ -61,7 +61,7 @@ public abstract class Processes {
 					// TODO make the information available, not just logging
 					return null;
 				}
-			};
+			});
 			task.executeEvery(60000, 60000);
 			task.start();
 		}

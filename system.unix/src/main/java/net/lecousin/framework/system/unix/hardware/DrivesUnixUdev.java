@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import net.lecousin.framework.application.LCCore;
-import net.lecousin.framework.concurrent.Task;
 import net.lecousin.framework.concurrent.async.Async;
 import net.lecousin.framework.concurrent.async.IAsync;
+import net.lecousin.framework.concurrent.threads.Task;
+import net.lecousin.framework.concurrent.threads.Task.Priority;
 import net.lecousin.framework.io.FileIO;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.progress.WorkProgress;
@@ -93,19 +94,19 @@ public class DrivesUnixUdev extends Drives {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends IO.Readable.Seekable & IO.KnownSize> T openReadOnly(PhysicalDrive drive, byte priority) {
+	public <T extends IO.Readable.Seekable & IO.KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) {
 		return (T)new FileIO.ReadOnly(new File(drive.getOSId()), priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends IO.Writable.Seekable & IO.KnownSize> T openWriteOnly(PhysicalDrive drive, byte priority) {
+	public <T extends IO.Writable.Seekable & IO.KnownSize> T openWriteOnly(PhysicalDrive drive, Priority priority) {
 		return (T)new FileIO.WriteOnly(new File(drive.getOSId()), priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends  IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable> T openReadWrite(PhysicalDrive drive, byte priority) {
+	public <T extends  IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable> T openReadWrite(PhysicalDrive drive, Priority priority) {
 		return (T)new FileIO.ReadWrite(new File(drive.getOSId()), priority);
 	}
 
@@ -422,7 +423,7 @@ public class DrivesUnixUdev extends Drives {
 	}
 	
 	private void readPartitions(PhysicalDriveUnix drive) {
-    	try (IO stream = openReadOnly(drive, Task.PRIORITY_IMPORTANT)) {
+    	try (IO stream = openReadOnly(drive, Task.Priority.IMPORTANT)) {
     		List<DiskPartition> partitions = new ArrayList<>();
     		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
     		for (DiskPartition p : partitions) {

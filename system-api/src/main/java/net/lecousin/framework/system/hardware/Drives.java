@@ -8,14 +8,16 @@ import java.util.function.Consumer;
 
 import net.lecousin.framework.adapter.Adapter;
 import net.lecousin.framework.adapter.AdapterException;
-import net.lecousin.framework.concurrent.DrivesTaskManager;
-import net.lecousin.framework.concurrent.Task;
-import net.lecousin.framework.concurrent.Threading;
 import net.lecousin.framework.concurrent.async.IAsync;
+import net.lecousin.framework.concurrent.threads.DrivesThreadingManager;
+import net.lecousin.framework.concurrent.threads.Task;
+import net.lecousin.framework.concurrent.threads.Task.Priority;
+import net.lecousin.framework.concurrent.threads.Threading;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.io.IO.Readable.Seekable;
 import net.lecousin.framework.progress.WorkProgress;
 import net.lecousin.framework.util.Pair;
+import net.lecousin.framework.util.Triple;
 
 /**
  * Get information about drives.
@@ -38,22 +40,23 @@ public abstract class Drives {
 		init.onDone(() -> {
 			if (init.isSuccessful())
 				try {
-					Threading.getDrivesTaskManager().setDrivesProvider(new DrivesTaskManager.DrivesProvider() {
+					Threading.getDrivesManager().setDrivesProvider(new DrivesThreadingManager.DrivesProvider() {
 						@Override
 						public void provide(
-							Consumer<Pair<Object, List<File>>> onNewDrive,
-							Consumer<Pair<Object, List<File>>> onDriveRemoved,
+							Consumer<Triple<Object, List<File>, Boolean>> onNewDrive,
+							Consumer<Object> onDriveRemoved,
 							Consumer<Pair<Object, File>> onNewPartition,
 							Consumer<Pair<Object, File>> onPartitionRemoved
 						) {
 							drives.getDrivesAndListen(new DriveListenerImpl(
-								(drive) -> { onNewDrive.accept(new Pair<>(drive, drive.getMountPoints())); },
-								(drive) -> { onDriveRemoved.accept(new Pair<>(drive, drive.getMountPoints())); },
-								(part) -> {
+								drive -> onNewDrive.accept(new Triple<>(drive, drive.getMountPoints(),
+										Boolean.valueOf(drive.supportConcurrentAccess()))),
+								drive -> onDriveRemoved.accept(drive),
+								part -> {
 									if (part.mountPoint != null) 
 										onNewPartition.accept(new Pair<>(part.drive, part.mountPoint));
 								},
-								(part) -> {
+								part -> {
 									if (part.mountPoint != null)
 										onPartitionRemoved.accept(new Pair<>(part.drive, part.mountPoint));
 								}
@@ -142,15 +145,15 @@ public abstract class Drives {
 	
 	/** Open a drive in read-only mode, in most of the system this requires administrator privileges. */
 	public abstract <T extends IO.Readable.Seekable & IO.KnownSize>
-	T openReadOnly(PhysicalDrive drive, byte priority) throws IOException;
+	T openReadOnly(PhysicalDrive drive, Priority priority) throws IOException;
 
 	/** Open a drive in write-only mode, in most of the system this requires administrator privileges. */
 	public abstract <T extends IO.Writable.Seekable & IO.KnownSize>
-	T openWriteOnly(PhysicalDrive drive, byte priority) throws IOException;
+	T openWriteOnly(PhysicalDrive drive, Priority priority) throws IOException;
 	
 	/** Open a drive in read and write mode, in most of the system this requires administrator privileges. */
 	public abstract <T extends IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable>
-	T openReadWrite(PhysicalDrive drive, byte priority) throws IOException;
+	T openReadWrite(PhysicalDrive drive, Priority priority) throws IOException;
 	
 	/** Return the dive containing the given file, or null. */
 	public Drive getDriveFor(File file) throws IOException {
@@ -180,7 +183,7 @@ public abstract class Drives {
 		@Override
 		public Seekable adapt(PhysicalDrive input) throws AdapterException {
 			try {
-				return instance.openReadOnly(input, Task.PRIORITY_NORMAL);
+				return instance.openReadOnly(input, Task.Priority.NORMAL);
 			} catch (IOException e) {
 				throw new AdapterException("Unable to convert PhysicalDrive into Seekable", e);
 			}
