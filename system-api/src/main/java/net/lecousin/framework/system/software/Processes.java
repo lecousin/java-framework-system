@@ -23,14 +23,14 @@ public abstract class Processes {
 			instance = processes;
 
 			Task<Void,NoException> task = Task.cpu("Checking idle time of the application", Task.Priority.BACKGROUND,
-				new Executable<Void, NoException>() {
+			new Executable<Void, NoException>() {
 				private long lastCheckTime = -1;
 				private long lastCPUTime;
 				private int processId;
 				private double[] usageLast10Minutes = new double[10];
 				private int minute = 0;
 				@Override
-				public Void execute() {
+				public Void execute(Task<Void, NoException> taskContext) {
 					if (lastCheckTime < 0) {
 						// first time we execute
 						if (LCSystem.log.debug())
