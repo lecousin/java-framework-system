@@ -67,19 +67,34 @@
   		</dependencies>
   	</profile>
   	<profile>
-  		<id>unix</id>
+  		<id>mac</id>
   		<activation>
   			<os>
-  				<family>unix</family>
+  				<family>mac</family>
   			</os>
   		</activation>
   		<dependencies>
   			<dependency>
 	  			<groupId>${project.groupId}</groupId>
-	  			<artifactId>unix</artifactId>
+	  			<artifactId>mac</artifactId>
 	  			<version>${project.version}</version>
   			</dependency>
   		</dependencies>
   	</profile>
+    <profile>
+      <id>unix</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>unix</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
 </project>

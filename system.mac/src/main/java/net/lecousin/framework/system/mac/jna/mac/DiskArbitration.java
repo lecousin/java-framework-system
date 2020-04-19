@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.jna.mac;
+package net.lecousin.framework.system.mac.jna.mac;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -7,8 +7,8 @@ import com.sun.jna.platform.mac.CoreFoundation.CFArrayRef;
 import com.sun.jna.platform.mac.CoreFoundation.CFDictionaryRef;
 import com.sun.jna.platform.mac.CoreFoundation.CFStringRef;
 
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFRunLoopRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFURLRef;
+import net.lecousin.framework.system.mac.jna.mac.CoreFoundation.CFRunLoopRef;
+import net.lecousin.framework.system.mac.jna.mac.CoreFoundation.CFURLRef;
 
 // skip checkstyle: MethodName
 public interface DiskArbitration extends com.sun.jna.platform.mac.DiskArbitration {

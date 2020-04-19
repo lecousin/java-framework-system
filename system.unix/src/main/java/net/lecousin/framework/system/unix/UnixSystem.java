@@ -3,17 +3,17 @@ package net.lecousin.framework.system.unix;
 import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.system.hardware.Hardware;
 import net.lecousin.framework.system.software.Software;
-import net.lecousin.framework.system.unix.hardware.UnixMacHardware;
-import net.lecousin.framework.system.unix.software.UnixMacSoftware;
+import net.lecousin.framework.system.unix.hardware.UnixHardware;
+import net.lecousin.framework.system.unix.software.UnixSoftware;
 
-public class UnixMacSystem extends LCSystem {
+public class UnixSystem extends LCSystem {
 
-	private UnixMacHardware hardware;
-	private UnixMacSoftware software;
+	private UnixHardware hardware;
+	private UnixSoftware software;
 	
-	UnixMacSystem() {
-		hardware = new UnixMacHardware();
-		software = new UnixMacSoftware();
+	UnixSystem() {
+		hardware = new UnixHardware();
+		software = new UnixSoftware();
 	}
 	
 	@Override

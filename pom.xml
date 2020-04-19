@@ -18,6 +18,7 @@
     <module>system-impl</module>
     <module>system.unix</module>
     <module>system.windows</module>
+    <module>system.mac</module>
     <module>system-tests</module>
   </modules>
 

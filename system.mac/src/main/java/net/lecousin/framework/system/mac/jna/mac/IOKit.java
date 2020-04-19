@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.jna.mac;
+package net.lecousin.framework.system.mac.jna.mac;
 
 import com.sun.jna.platform.mac.CoreFoundation.CFBooleanRef;
 import com.sun.jna.platform.mac.CoreFoundation.CFDataRef;
@@ -6,7 +6,7 @@ import com.sun.jna.platform.mac.CoreFoundation.CFNumberRef;
 import com.sun.jna.platform.mac.CoreFoundation.CFStringRef;
 import com.sun.jna.platform.mac.CoreFoundation.CFTypeRef;
 
-import net.lecousin.framework.system.unix.jna.JnaInstances;
+import net.lecousin.framework.system.mac.jna.JnaInstances;
 
 public interface IOKit extends com.sun.jna.platform.mac.IOKit {
 

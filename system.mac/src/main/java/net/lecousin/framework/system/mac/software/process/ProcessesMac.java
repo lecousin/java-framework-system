@@ -1,14 +1,14 @@
-package net.lecousin.framework.system.unix.software.process;
+package net.lecousin.framework.system.mac.software.process;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.jna.platform.mac.SystemB;
 
+import net.lecousin.framework.system.mac.jna.JnaInstances;
+import net.lecousin.framework.system.mac.jna.LibC;
 import net.lecousin.framework.system.software.process.Processes;
 import net.lecousin.framework.system.software.process.SeparateProcess;
-import net.lecousin.framework.system.unix.jna.JnaInstances;
-import net.lecousin.framework.system.unix.jna.LibC;
 
 /**
  * Implementation of Processes for Unix systems.

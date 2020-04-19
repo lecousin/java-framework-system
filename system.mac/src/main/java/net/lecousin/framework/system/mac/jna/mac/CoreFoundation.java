@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.jna.mac;
+package net.lecousin.framework.system.mac.jna.mac;
 
 import com.sun.jna.PointerType;
 

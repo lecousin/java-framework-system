@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.jna;
+package net.lecousin.framework.system.mac.jna;
 
 import java.util.Arrays;
 import java.util.List;
