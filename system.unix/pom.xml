@@ -1,18 +1,20 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>unix</artifactId>
-  
+
   <parent>
-  	<groupId>net.lecousin.framework.system</groupId>
-  	<artifactId>parent-pom</artifactId>
-  	<version>0.3.0-SNAPSHOT</version>
-  	<relativePath>..</relativePath>
+    <groupId>net.lecousin.framework.system</groupId>
+    <artifactId>parent-pom</artifactId>
+    <version>0.3.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
-  
-	<name>lecousin.net Java framework - system.unix</name>
-	<description>Unix operating systems functionalities</description>
-	<url>https://github.com/lecousin/java-framework-system</url>
-  
+
+  <name>lecousin.net Java framework - system.unix</name>
+  <description>Unix operating systems functionalities</description>
+  <url>https://github.com/lecousin/java-framework-system</url>
+
   <licenses>
     <license>
       <name>Apache 2.0</name>
@@ -20,51 +22,51 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-    
+
   <developers>
     <developer>
-    	<id>lecousin</id>
-    	<name>Guillaume Le Cousin</name>
+      <id>lecousin</id>
+      <name>Guillaume Le Cousin</name>
     </developer>
   </developers>
-  
-	<scm>
-		<connection>scm:git:https://github.com/lecousin/java-framework-system.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com:lecousin/java-framework-system.git</developerConnection>
-		<url>https://github.com/lecousin/java-framework-system</url>
-		<tag>HEAD</tag>
-	</scm>
 
-	<distributionManagement>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+  <scm>
+    <connection>scm:git:https://github.com/lecousin/java-framework-system.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:lecousin/java-framework-system.git</developerConnection>
+    <url>https://github.com/lecousin/java-framework-system</url>
+    <tag>HEAD</tag>
+  </scm>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-  
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <dependencies>
-  	<dependency>
-  		<groupId>net.lecousin</groupId>
-  		<artifactId>core</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>${project.groupId}</groupId>
-  		<artifactId>system-api</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>net.java.dev.jna</groupId>
-  		<artifactId>jna-platform</artifactId>
-  		<version>4.4.0</version>
-  	</dependency>
+    <dependency>
+      <groupId>net.lecousin</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>system-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+      <version>${jna.version}</version>
+    </dependency>
   </dependencies>
-  
+
 </project>

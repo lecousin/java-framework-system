@@ -9,13 +9,6 @@
   
   <dependencies>
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>system-impl</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-    </dependency>
-    
-    <dependency>
       <groupId>net.lecousin</groupId>
       <artifactId>core</artifactId>
       <type>test-jar</type>
@@ -29,7 +22,40 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
+  <profiles>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>windows</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>unix</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>unix</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+    
   <build>
     <plugins>
       <plugin>
@@ -37,6 +63,12 @@
         <configuration>
           <skip>true</skip>
           <skipIfEmpty>true</skipIfEmpty>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     

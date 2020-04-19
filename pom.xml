@@ -38,6 +38,7 @@
 
   <properties>
     <lc.core.version>0.21.0-SNAPSHOT</lc.core.version>
+    <jna.version>4.4.0</jna.version>
   </properties>
   
   <repositories>
