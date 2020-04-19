@@ -27,7 +27,6 @@ import net.lecousin.framework.system.unix.jna.mac.SystemB;
 import net.lecousin.framework.system.unix.jna.mac.SystemB.Statfs;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -227,7 +226,6 @@ public class TestDiskArbitration {
 	
 	@Test
 	public void printInfo() {
-		Assume.assumeNotNull(JnaInstances.systemB);
 		// nothing
 	}
 	

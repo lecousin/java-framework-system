@@ -10,7 +10,6 @@ import net.lecousin.framework.system.unix.jna.LibC.FDSet;
 import net.lecousin.framework.system.unix.jna.LibC.TimeVal;
 import net.lecousin.framework.system.unix.jna.linux.Udev;
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -154,7 +153,6 @@ public class TestUdev {
 	
 	@Test
 	public void printUDevInfos() {
-		Assume.assumeNotNull(udev);
 		// nothing
 	}
 
