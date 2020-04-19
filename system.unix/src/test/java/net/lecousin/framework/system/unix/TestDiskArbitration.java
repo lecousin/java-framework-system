@@ -108,6 +108,7 @@ public class TestDiskArbitration {
 		
 		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
 		
+		System.out.println("-- Iteration over services IOMedia ---");
         List<String> bsdNames = new ArrayList<>();
         IOIterator iter = IOKitUtil.getMatchingServices("IOMedia");
         IORegistryEntry media = iter.next();
@@ -122,8 +123,10 @@ public class TestDiskArbitration {
             media = iter.next();
         }
 
+		System.out.println("-- For each BSD name ---");
         
 		for (String name : bsdNames) {
+			System.out.println("Create disk for " + name);
 			DADiskRef disk = da.DADiskCreateFromBSDName(JnaInstances.ALLOCATOR, session, "/dev/" + name);
 			if (disk != null) {
 				showDiskInfo(disk);
@@ -139,6 +142,7 @@ public class TestDiskArbitration {
 	}
 	
 	private static void showDiskInfo(DADiskRef disk) {
+		System.out.println(" ++ DISK INFO ++");
 		DiskArbitration da = JnaInstances.diskArbitration;
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo != null) {
@@ -161,6 +165,7 @@ public class TestDiskArbitration {
 				
 				// search for all IOservices that match the model
 				// getMatchingServices releases matchingDict
+				System.out.println(" > Iteration over services of disk <");
 				IOIterator serviceIterator = IOKitUtil.getMatchingServices(matchingDict);
 				if (serviceIterator != null) {
 					IORegistryEntry sdService = serviceIterator.next();
@@ -175,6 +180,7 @@ public class TestDiskArbitration {
 					}
 					serviceIterator.release();
 				}
+				System.out.println(" > End of iteration over services of disk <");
 			}
 
 			System.out.println("Disk: " + model + " - " + serial + " - " + size);
