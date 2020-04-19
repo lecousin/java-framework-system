@@ -86,12 +86,13 @@
       <activation>
         <os>
           <family>unix</family>
+          <name>linux</name>
         </os>
       </activation>
       <dependencies>
         <dependency>
           <groupId>${project.groupId}</groupId>
-          <artifactId>unix</artifactId>
+          <artifactId>linux</artifactId>
           <version>${project.version}</version>
         </dependency>
       </dependencies>

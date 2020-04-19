@@ -3,10 +3,6 @@ package net.lecousin.framework.system.mac.jna;
 import com.sun.jna.platform.mac.CoreFoundation.CFAllocatorRef;
 import com.sun.jna.platform.mac.SystemB;
 
-import net.lecousin.framework.system.mac.jna.mac.CoreFoundation;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.mac.jna.mac.IOKit;
-
 public final class JnaInstances {
 
 	private JnaInstances() {

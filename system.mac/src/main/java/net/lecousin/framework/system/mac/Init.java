@@ -5,11 +5,11 @@ import com.sun.jna.platform.mac.SystemB;
 
 import net.lecousin.framework.plugins.CustomExtensionPoint;
 import net.lecousin.framework.system.LCSystem;
+import net.lecousin.framework.system.mac.jna.CoreFoundation;
+import net.lecousin.framework.system.mac.jna.DiskArbitration;
+import net.lecousin.framework.system.mac.jna.IOKit;
 import net.lecousin.framework.system.mac.jna.JnaInstances;
-import net.lecousin.framework.system.mac.jna.mac.CoreFoundation;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.mac.jna.mac.IOKit;
-import net.lecousin.framework.system.mac.jna.mac.RunLoopThread;
+import net.lecousin.framework.system.mac.jna.RunLoopThread;
 
 /**
  * Initialization.

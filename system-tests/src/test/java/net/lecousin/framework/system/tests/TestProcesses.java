@@ -12,6 +12,7 @@ public class TestProcesses extends LCCoreAbstractTest {
 	@Test
 	public void testProcesses() {
 		Processes processes = LCSystem.get().getSoftware().getProcesses();
+		Assert.assertNotEquals(0, processes.getCurrentProcessId());
 		Assert.assertNotEquals(0, processes.listProcessesIds().size());
 	}
 	

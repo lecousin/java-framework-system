@@ -16,7 +16,7 @@
   <modules>
     <module>system-api</module>
     <module>system-impl</module>
-    <module>system.unix</module>
+    <module>system.linux</module>
     <module>system.windows</module>
     <module>system.mac</module>
     <module>system-tests</module>

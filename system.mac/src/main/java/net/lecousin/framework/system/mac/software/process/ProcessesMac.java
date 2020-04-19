@@ -6,7 +6,6 @@ import java.util.List;
 import com.sun.jna.platform.mac.SystemB;
 
 import net.lecousin.framework.system.mac.jna.JnaInstances;
-import net.lecousin.framework.system.mac.jna.LibC;
 import net.lecousin.framework.system.software.process.Processes;
 import net.lecousin.framework.system.software.process.SeparateProcess;
 
@@ -18,7 +17,7 @@ public class ProcessesMac extends Processes {
 
 	@Override
 	public int getCurrentProcessId() {
-		return LibC.INSTANCE.getpid();
+		return JnaInstances.systemB.getpid();
 	}
 
 	@Override

@@ -25,12 +25,12 @@ import net.lecousin.framework.application.Artifact;
 import net.lecousin.framework.application.Version;
 import net.lecousin.framework.core.test.LCCoreAbstractTest;
 import net.lecousin.framework.system.mac.Init;
+import net.lecousin.framework.system.mac.jna.DiskArbitration;
+import net.lecousin.framework.system.mac.jna.IOKit;
 import net.lecousin.framework.system.mac.jna.JnaInstances;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.mac.jna.mac.IOKit;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration.DADiskAppearedCallback;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration.DADiskDescriptionChangedCallback;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration.DADiskDisappearedCallback;
+import net.lecousin.framework.system.mac.jna.DiskArbitration.DADiskAppearedCallback;
+import net.lecousin.framework.system.mac.jna.DiskArbitration.DADiskDescriptionChangedCallback;
+import net.lecousin.framework.system.mac.jna.DiskArbitration.DADiskDisappearedCallback;
 
 import org.junit.After;
 import org.junit.Before;

@@ -37,9 +37,9 @@ import net.lecousin.framework.system.hardware.drive.DriveListener;
 import net.lecousin.framework.system.hardware.drive.Drives;
 import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 import net.lecousin.framework.system.hardware.drive.PhysicalDrive.InterfaceType;
+import net.lecousin.framework.system.mac.jna.DiskArbitration;
+import net.lecousin.framework.system.mac.jna.IOKit;
 import net.lecousin.framework.system.mac.jna.JnaInstances;
-import net.lecousin.framework.system.mac.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.mac.jna.mac.IOKit;
 import net.lecousin.framework.util.Pair;
 import net.lecousin.framework.util.ProcessUtil;
 
