@@ -160,9 +160,6 @@ public class TestDiskArbitration {
 				CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, new CFIndex(0), null, null);
 				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, CFStringRef.createCFString("IOPropertyMatch"), propertyDict);
 
-				JnaInstances.coreFoundation.CFRelease(modelNameRef);
-				JnaInstances.coreFoundation.CFRelease(propertyDict);
-				
 				// search for all IOservices that match the model
 				// getMatchingServices releases matchingDict
 				System.out.println(" > Iteration over services of disk <");
@@ -181,6 +178,8 @@ public class TestDiskArbitration {
 					serviceIterator.release();
 				}
 				System.out.println(" > End of iteration over services of disk <");
+				JnaInstances.coreFoundation.CFRelease(modelNameRef);
+				JnaInstances.coreFoundation.CFRelease(propertyDict);
 			}
 
 			System.out.println("Disk: " + model + " - " + serial + " - " + size);

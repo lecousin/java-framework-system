@@ -1,26 +1,13 @@
 version: '{build}'
 image:
  - Visual Studio 2019
+ - macos
+ - Ubuntu1804
  - Visual Studio 2017
  - Visual Studio 2015
  - Visual Studio 2013
- - macos
  - macos-mojave
- - Ubuntu1804
  - Ubuntu1604
-install:
-  - ps: |
-      Add-Type -AssemblyName System.IO.Compression.FileSystem
-      if (!(Test-Path -Path "C:\maven" )) {
-        (new-object System.Net.WebClient).DownloadFile(
-          'http://www.us.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.zip',
-          'C:\maven-bin.zip'
-        )
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("C:\maven-bin.zip", "C:\maven")
-      }
-  - cmd: SET PATH=C:\maven\apache-maven-3.3.9\bin;%JAVA_HOME%\bin;%PATH%
-  - cmd: SET MAVEN_OPTS=-Xmx1024m
-  - cmd: SET JAVA_OPTS=-XX:+UseG1GC -Xmx1024m
 build_script:
   - mvn clean package --batch-mode -DskipTests
 test_script:
