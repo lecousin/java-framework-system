@@ -9,6 +9,7 @@ import com.sun.jna.ptr.IntByReference;
 import net.lecousin.framework.application.Application;
 import net.lecousin.framework.application.Artifact;
 import net.lecousin.framework.application.Version;
+import net.lecousin.framework.core.test.LCCoreAbstractTest;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFArrayRef;
@@ -25,12 +26,40 @@ import net.lecousin.framework.system.unix.jna.mac.IOKit;
 import net.lecousin.framework.system.unix.jna.mac.SystemB;
 import net.lecousin.framework.system.unix.jna.mac.SystemB.Statfs;
 
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 public class TestDiskArbitration {
 
 	public static void main(String[] args) {
 		Application.start(new Artifact("net.lecousin.framework.system", "test-mac", new Version("0")), true);
 		new Init();
 		
+		TestDiskArbitration instance = new TestDiskArbitration();
+		instance.init();
+		
+		try { Thread.sleep(10 * 60 * 1000); }
+		catch (InterruptedException e) {}
+		
+		System.out.println("Close session");
+		
+		instance.close();
+	}
+	
+	@BeforeClass
+	public static void initLC() throws Exception {
+		LCCoreAbstractTest.init();
+	}
+	
+	private DASessionRef session;
+	
+	@Before
+	public void init() {
+		if (JnaInstances.systemB == null)
+			return;
         int numfs = JnaInstances.systemB.getfsstat64(null, 0, 0);
         Statfs[] fs = new Statfs[numfs];
         JnaInstances.systemB.getfsstat64(fs, numfs * new Statfs().size(), SystemB.MNT_NOWAIT);
@@ -97,12 +126,10 @@ public class TestDiskArbitration {
 		}, null);
 		
 		da.DASessionScheduleWithRunLoop(session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
-		
-		try { Thread.sleep(10 * 60 * 1000); }
-		catch (InterruptedException e) {}
-		
-		System.out.println("Close session");
-		
+	}
+	
+	@After
+	public void close() {
 		JnaInstances.coreFoundation.CFRelease(session);
 	}
 	
@@ -197,7 +224,14 @@ public class TestDiskArbitration {
 		case LONG: System.out.println("    > " + CoreFoundation.Util.cfPointerToLong(ptr)); break;
 		}
 	}
-	/* Result
+	
+	@Test
+	public void printInfo() {
+		Assume.assumeNotNull(JnaInstances.systemB);
+		// nothing
+	}
+	
+	/* Result on VM
 Mounted filesystem: /dev/disk0s2 => /
 Mounted filesystem: devfs => /dev
 Mounted filesystem: map -hosts => /net

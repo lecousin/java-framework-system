@@ -3,19 +3,42 @@ package net.lecousin.framework.system.unix;
 import net.lecousin.framework.application.Application;
 import net.lecousin.framework.application.Artifact;
 import net.lecousin.framework.application.Version;
+import net.lecousin.framework.core.test.LCCoreAbstractTest;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.LibC;
 import net.lecousin.framework.system.unix.jna.LibC.FDSet;
 import net.lecousin.framework.system.unix.jna.LibC.TimeVal;
 import net.lecousin.framework.system.unix.jna.linux.Udev;
 
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 public class TestUdev {
 
 	public static void main(String[] args) {
 		Application.start(new Artifact("net.lecousin.framework.system", "test-linux", new Version("0")), true);
 		new Init();
-		Udev udev = JnaInstances.udev;
-		Udev.UdevHandle handle = udev.udev_new();
+		TestUdev instance = new TestUdev();
+		instance.init();
+		instance.monitor();
+	}
+	
+	@BeforeClass
+	public static void initLC() throws Exception {
+		LCCoreAbstractTest.init();
+	}
+	
+	private Udev udev;
+	private Udev.UdevHandle handle;
+	
+	@Before
+	public void init() {
+		udev = JnaInstances.udev;
+		if (udev == null)
+			return;
+		handle = udev.udev_new();
 		Udev.UdevEnumerate enumerate = udev.udev_enumerate_new(handle);
 		udev.udev_enumerate_add_match_subsystem(enumerate, "block");
 		udev.udev_enumerate_scan_devices(enumerate);
@@ -66,7 +89,9 @@ public class TestUdev {
 					udev.udev_device_unref(device);
 			}
 		}
-		
+	}
+	
+	private void monitor() {
 		System.out.println("====================== Start monitor =====================");
 		Udev.UdevMonitor monitor = udev.udev_monitor_new_from_netlink(handle, "udev");
 		int res = udev.udev_monitor_enable_receiving(monitor);
@@ -122,10 +147,15 @@ public class TestUdev {
 				}
 				
 			} finally {
-				if (device != null)
-					udev.udev_device_unref(device);
+				udev.udev_device_unref(device);
 			}
 		}
+	}
+	
+	@Test
+	public void printUDevInfos() {
+		Assume.assumeNotNull(udev);
+		// nothing
 	}
 
 }

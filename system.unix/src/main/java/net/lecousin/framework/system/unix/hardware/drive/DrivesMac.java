@@ -1,6 +1,5 @@
 package net.lecousin.framework.system.unix.hardware.drive;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -44,6 +43,8 @@ import net.lecousin.framework.util.ProcessUtil;
  * Drives implementation for Mac OS.
  */
 public class DrivesMac extends Drives {
+	
+	private static final String DEV_ROOT = "/dev/";
 
 	@Override
 	protected void initializeDrives(WorkProgress progress) {
@@ -90,7 +91,6 @@ public class DrivesMac extends Drives {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private void initDrives(WorkProgress progress) {
 		DiskArbitration da = JnaInstances.diskArbitration;
 		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
@@ -103,7 +103,6 @@ public class DrivesMac extends Drives {
         	//if (IOKit.Util.getIORegistryBooleanProperty(media, "Whole")) {
         	DADiskRef disk = da.DADiskCreateFromIOMedia(JnaInstances.ALLOCATOR, session, media);
         	String name = da.DADiskGetBSDName(disk);
-        	System.out.println("BSD Name: " + name);
         	bsdNames.add(name);
         	//}
         	JnaInstances.ioKit.IOObjectRelease(media);
@@ -113,7 +112,7 @@ public class DrivesMac extends Drives {
         Mutable<List<Pair<String, String>>> bsdNamesMountPoints = new Mutable<>(null);
         Mutable<List<DiskImageInfo>> diskImages = new Mutable<>(null);
 		for (String name : bsdNames) {
-			DADiskRef disk = da.DADiskCreateFromBSDName(JnaInstances.ALLOCATOR, session, "/dev/" + name);
+			DADiskRef disk = da.DADiskCreateFromBSDName(JnaInstances.ALLOCATOR, session, DEV_ROOT + name);
 			if (disk != null) {
 				newDisk(disk, bsdNamesMountPoints, diskImages);
 				JnaInstances.coreFoundation.CFRelease(disk);
@@ -133,12 +132,7 @@ public class DrivesMac extends Drives {
 			session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode")
 		);
 		
-		LCCore.get().toClose(new Closeable() {
-			@Override
-			public void close() {
-				JnaInstances.coreFoundation.CFRelease(session);
-			}
-		});
+		LCCore.get().toClose(() -> JnaInstances.coreFoundation.CFRelease(session));
 	}
 	
 	private static class DiskImageInfo {
@@ -151,7 +145,7 @@ public class DrivesMac extends Drives {
 		List<String> lines = new LinkedList<>();
 		try {
 			Process process = Runtime.getRuntime().exec("hdiutil info");
-			ProcessUtil.consumeProcessConsole(process, (line) -> { lines.add(line); }, (line) -> { });
+			ProcessUtil.consumeProcessConsole(process, lines::add, line -> { });
 			int exitCode = process.waitFor();
 			if (exitCode != 0) return infos;
 		} catch (Exception t) {
@@ -168,12 +162,13 @@ public class DrivesMac extends Drives {
 				di = new DiskImageInfo();
 				continue;
 			}
+			if (di == null) continue;
 			if (line.length() > 16 && line.charAt(16) == ':') {
 				String key = line.substring(0, 15).trim();
 				String value = line.length() > 18 ? line.substring(18).trim() : "";
 				if ("image-path".equals(key))
 					di.path = value;
-			} else if (line.startsWith("/dev/")) {
+			} else if (line.startsWith(DEV_ROOT)) {
 				int i = line.indexOf(' ');
 				String dev = i < 0 ? line : line.substring(0, i);
 				di.devices.add(dev);
@@ -192,8 +187,9 @@ public class DrivesMac extends Drives {
         for (Statfs f : fs) {
             String mntFrom = new String(f.f_mntfromname).trim();
             String mntPath = new String(f.f_mntonname).trim();
+            if (mntFrom.isEmpty() || mntPath.isEmpty())
+            	continue;
             list.add(new Pair<>(mntFrom, mntPath));
-            LCSystem.log.info("Mounted filesystem: " + mntFrom + " => " + mntPath);
         }
         return list;
 	}
@@ -300,7 +296,7 @@ public class DrivesMac extends Drives {
 		part.filesystem = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeName);
 		part.name = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
-		part.mountPoint = getMountPointFromDeviceName("/dev/" + bsdName, bsdNamesMountPoints);
+		part.mountPoint = getMountPointFromDeviceName(DEV_ROOT + bsdName, bsdNamesMountPoints);
 		for (DiskPartition p : ((PhysicalDriveUnix)part.drive).partitions) {
 			if (p.OSID.equals(bsdName))
 				return;

@@ -306,6 +306,8 @@ public class DrivesUnixUdev extends Drives {
 			drive.itype = PhysicalDrive.InterfaceType.ATA;
 		else if ("usb".equals(bus))
 			drive.itype = PhysicalDrive.InterfaceType.USB;
+		else if ("scsi".equals(bus))
+			drive.itype = PhysicalDrive.InterfaceType.SCSI;
 		else {
 			LCSystem.log.warn("Unknown bus type '" + bus + "' for " + devnode);
 			drive.itype = PhysicalDrive.InterfaceType.Unknown;
