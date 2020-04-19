@@ -40,6 +40,36 @@ public class TestDiskArbitration {
 		TestDiskArbitration instance = new TestDiskArbitration();
 		instance.init();
 		
+		System.out.println(" === Start monitoring ===");
+		
+		DiskArbitration da = JnaInstances.diskArbitration;
+		da.DARegisterDiskAppearedCallback(instance.session, null, new DADiskAppearedCallback() {
+			@Override
+			public void callback(DADiskRef disk, Pointer context) {
+				System.out.println("Disk appeared");
+				showDiskInfo(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
+			}
+		}, null);
+		da.DARegisterDiskDescriptionChangedCallback(instance.session, null, null, new DADiskDescriptionChangedCallback() {
+			@Override
+			public void callback(DADiskRef disk, CFArrayRef keys, Pointer context) {
+				System.out.println("Disk changed");
+				showDiskInfo(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
+			}
+		}, null);
+		da.DARegisterDiskDisappearedCallback(instance.session, null, new DADiskDisappearedCallback() {
+			@Override
+			public void callback(DADiskRef disk, Pointer context) {
+				System.out.println("Disk disappeared");
+				showDiskInfo(disk);
+				//JnaInstances.coreFoundation.CFRelease(disk);
+			}
+		}, null);
+		
+		da.DASessionScheduleWithRunLoop(instance.session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
+
 		try { Thread.sleep(10 * 60 * 1000); }
 		catch (InterruptedException e) {}
 		
@@ -96,40 +126,12 @@ public class TestDiskArbitration {
 				JnaInstances.coreFoundation.CFRelease(disk);
 			}
 		}
-		
-		System.out.println(" === Start monitoring ===");
-		
-		da.DARegisterDiskAppearedCallback(session, null, new DADiskAppearedCallback() {
-			@Override
-			public void callback(DADiskRef disk, Pointer context) {
-				System.out.println("Disk appeared");
-				showDiskInfo(disk);
-				//JnaInstances.coreFoundation.CFRelease(disk);
-			}
-		}, null);
-		da.DARegisterDiskDescriptionChangedCallback(session, null, null, new DADiskDescriptionChangedCallback() {
-			@Override
-			public void callback(DADiskRef disk, CFArrayRef keys, Pointer context) {
-				System.out.println("Disk changed");
-				showDiskInfo(disk);
-				//JnaInstances.coreFoundation.CFRelease(disk);
-			}
-		}, null);
-		da.DARegisterDiskDisappearedCallback(session, null, new DADiskDisappearedCallback() {
-			@Override
-			public void callback(DADiskRef disk, Pointer context) {
-				System.out.println("Disk disappeared");
-				showDiskInfo(disk);
-				//JnaInstances.coreFoundation.CFRelease(disk);
-			}
-		}, null);
-		
-		da.DASessionScheduleWithRunLoop(session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
 	}
 	
 	@After
 	public void close() {
-		JnaInstances.coreFoundation.CFRelease(session);
+		if (session != null)
+			JnaInstances.coreFoundation.CFRelease(session);
 	}
 	
 	private static void showDiskInfo(DADiskRef disk) {

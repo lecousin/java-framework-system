@@ -208,6 +208,7 @@ public class DrivesMac extends Drives {
     private static final CFStringRef strDAMediaBSDName = CFStringRef.toCFString("DAMediaBSDName");
 	private static final CFStringRef strDAMediaWhole = CFStringRef.toCFString("DAMediaWhole");
 	private static final CFStringRef strDABusPath = CFStringRef.toCFString("DABusPath");
+	private static final CFStringRef strDABusName = CFStringRef.toCFString("DABusName");
 	private static final CFStringRef strDADeviceVendor = CFStringRef.toCFString("DADeviceVendor");
 	private static final CFStringRef strDAMediaRemovable = CFStringRef.toCFString("DAMediaRemovable");
 	private static final CFStringRef strDADeviceRevision = CFStringRef.toCFString("DADeviceRevision");
@@ -247,7 +248,12 @@ public class DrivesMac extends Drives {
 			drive.removable = ptr == null ? false : CoreFoundation.Util.cfPointerToBoolean(ptr);
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceRevision);
 			drive.version = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
-			drive.itype = InterfaceType.Unknown; // TODO
+			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusName);
+			String s = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			if ("scsi".equals(s))
+				drive.itype = InterfaceType.SCSI;
+			else
+				drive.itype = InterfaceType.Unknown; // TODO
 			drive.type = PhysicalDrive.Type.UNKNOWN; // TODO
 			
 			CFStringRef modelNameRef = CFStringRef.toCFString(model);
