@@ -1,12 +1,12 @@
-package net.lecousin.framework.system.windows.hardware;
+package net.lecousin.framework.system.windows.hardware.drive;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import net.lecousin.framework.system.hardware.DiskPartition;
-import net.lecousin.framework.system.hardware.PhysicalDrive;
+import net.lecousin.framework.system.hardware.drive.DiskPartition;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 
 /**
  * Physical drive.

@@ -1,11 +1,11 @@
-package net.lecousin.framework.system.unix.hardware;
+package net.lecousin.framework.system.unix.hardware.drive;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.lecousin.framework.system.hardware.DiskPartition;
-import net.lecousin.framework.system.hardware.PhysicalDrive;
+import net.lecousin.framework.system.hardware.drive.DiskPartition;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 
 /** Implementation of PhysicalDrive for Unix systems. */
 public class PhysicalDriveUnix implements PhysicalDrive {

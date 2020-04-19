@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.hardware;
+package net.lecousin.framework.system.unix.hardware.drive;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -19,13 +19,13 @@ import net.lecousin.framework.concurrent.threads.Task.Priority;
 import net.lecousin.framework.io.FileIO;
 import net.lecousin.framework.io.IO;
 import net.lecousin.framework.progress.WorkProgress;
-import net.lecousin.framework.progress.WorkProgressImpl;
 import net.lecousin.framework.system.LCSystem;
-import net.lecousin.framework.system.hardware.DiskPartition;
-import net.lecousin.framework.system.hardware.DiskPartitionsUtil;
-import net.lecousin.framework.system.hardware.Drive;
-import net.lecousin.framework.system.hardware.Drives;
-import net.lecousin.framework.system.hardware.PhysicalDrive;
+import net.lecousin.framework.system.hardware.drive.DiskPartition;
+import net.lecousin.framework.system.hardware.drive.DiskPartitionTable;
+import net.lecousin.framework.system.hardware.drive.Drive;
+import net.lecousin.framework.system.hardware.drive.DriveListener;
+import net.lecousin.framework.system.hardware.drive.Drives;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.LibC;
 import net.lecousin.framework.system.unix.jna.LibC.FDSet;
@@ -36,21 +36,10 @@ import net.lecousin.framework.util.AsyncCloseable;
 /** Drives implementation for Linux with udev. */
 public class DrivesUnixUdev extends Drives {
 
-	private WorkProgress init = null;
-
 	@Override
-	public WorkProgress initialize() {
-		if (init != null) return init;
-		init = new WorkProgressImpl(100000, "Loading drives information");
-		new Thread("Initializing Drives Information") {
-			@Override
-			public void run() {
-				initDrives(init);
-				LCSystem.log.info("Drives information initialized");
-				init.done();
-			}
-		}.start();
-		return init;
+	protected void initializeDrives(WorkProgress progress) {
+		initDrives(progress);
+		progress.done();
 	}
 
 	private List<Drive> drives = new ArrayList<>();
@@ -425,7 +414,7 @@ public class DrivesUnixUdev extends Drives {
 	private void readPartitions(PhysicalDriveUnix drive) {
     	try (IO stream = openReadOnly(drive, Task.Priority.IMPORTANT)) {
     		List<DiskPartition> partitions = new ArrayList<>();
-    		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
+    		DiskPartitionTable.readPartitionTable((IO.Readable.Seekable)stream, partitions);
     		for (DiskPartition p : partitions) {
     			boolean found = false;
     			for (DiskPartition dp : drive.partitions) {

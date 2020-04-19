@@ -1,10 +1,10 @@
-package net.lecousin.framework.system.windows.hardware;
+package net.lecousin.framework.system.windows.hardware.drive;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import net.lecousin.framework.system.hardware.NetworkDrive;
+import net.lecousin.framework.system.hardware.drive.NetworkDrive;
 
 /**
  * Network drive.

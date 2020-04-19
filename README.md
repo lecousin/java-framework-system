@@ -8,7 +8,8 @@ The system-api library defines the interface to be implemented for each operatin
 The system.unix and system.windows contain implementations for Unix/Mac and Windows OS.
 
 The system-impl contains a POM with profiles to automatically add a dependency to either
-system.unix or system.windows depending on your operating system.
+system.unix or system.windows depending on your operating system, so this is the dependency
+you can add on your project. (with type pom)
 
 ## Build status
 

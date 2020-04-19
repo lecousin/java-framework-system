@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.hardware;
+package net.lecousin.framework.system.hardware.drive;
 
 /**
  * Network drive.

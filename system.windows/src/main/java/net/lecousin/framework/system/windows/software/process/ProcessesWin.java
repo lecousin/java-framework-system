@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.windows.software;
+package net.lecousin.framework.system.windows.software.process;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -12,9 +12,11 @@ import com.sun.jna.ptr.IntByReference;
 
 import net.lecousin.framework.application.Application;
 import net.lecousin.framework.application.LCCore;
+import net.lecousin.framework.concurrent.threads.ApplicationThread;
 import net.lecousin.framework.event.SimpleEvent;
 import net.lecousin.framework.io.util.DataUtil;
-import net.lecousin.framework.system.software.Processes;
+import net.lecousin.framework.system.software.process.Processes;
+import net.lecousin.framework.system.software.process.SeparateProcess;
 import net.lecousin.framework.system.windows.jna.Kernel32;
 import net.lecousin.framework.system.windows.jna.Psapi;
 
@@ -64,22 +66,28 @@ public class ProcessesWin extends Processes {
 		if (!ok) throw new Exception("TerminateProcess failed");
 	}
 	
-	private static class SeparateProcess implements Processes.SeparateProcess, Closeable {
-		private SeparateProcess(HANDLE handle, String command) {
+	private static class SeparateProcessWin implements SeparateProcess, Closeable {
+		private SeparateProcessWin(HANDLE handle, String command) {
 			this.handle = handle;
-			Application app = LCCore.getApplication();
-			thread = app.getThreadFactory().newThread(new WaitFor());
+			app = LCCore.getApplication();
+			thread = app.createThread(new WaitFor());
 			thread.setName("Wait for process to terminate: " + command);
 			thread.start();
 			app.toClose(1, this);
 		}
 		
+		private Application app;
 		private HANDLE handle;
 		private Thread thread;
 		private Integer exitCode = null;
 		private SimpleEvent terminated = new SimpleEvent();
 		
-		private class WaitFor implements Runnable {
+		private class WaitFor implements ApplicationThread {
+			@Override
+			public Application getApplication() {
+				return app;
+			}
+			
 			@Override
 			public void run() {
 				try {
@@ -94,8 +102,13 @@ public class ProcessesWin extends Processes {
 					terminated.fire();
 				} finally {
 					Kernel32.INSTANCE.CloseHandle(handle);
-					LCCore.getApplication().closed(SeparateProcess.this);
+					LCCore.getApplication().closed(SeparateProcessWin.this);
 				}
+			}
+			
+			@Override
+			public void debugStatus(StringBuilder s) {
+				s.append(" - ").append(thread.getName()).append('\n');
 			}
 		}
 		
@@ -110,7 +123,7 @@ public class ProcessesWin extends Processes {
 		public void kill() {
 			Kernel32.INSTANCE.TerminateProcess(handle, 0);
 			Kernel32.INSTANCE.CloseHandle(handle);
-			LCCore.getApplication().closed(SeparateProcess.this);
+			LCCore.getApplication().closed(SeparateProcessWin.this);
 		}
 		
 		@Override
@@ -165,6 +178,6 @@ public class ProcessesWin extends Processes {
 		if (debug)
 			LCCore.getApplication().getDefaultLogger().info("Command executed: " + cmd + " " + params.toString());
 		
-		return new SeparateProcess(execInfo.hProcess, Arrays.toString(command));
+		return new SeparateProcessWin(execInfo.hProcess, Arrays.toString(command));
 	}
 }

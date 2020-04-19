@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.windows.hardware;
+package net.lecousin.framework.system.windows.hardware.drive;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.util.Map;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
@@ -28,17 +27,18 @@ import net.lecousin.framework.io.IO.Readable;
 import net.lecousin.framework.io.IO.Writable;
 import net.lecousin.framework.io.util.DataUtil;
 import net.lecousin.framework.progress.WorkProgress;
-import net.lecousin.framework.progress.WorkProgressImpl;
 import net.lecousin.framework.system.LCSystem;
-import net.lecousin.framework.system.hardware.DiskPartition;
-import net.lecousin.framework.system.hardware.DiskPartitionsUtil;
-import net.lecousin.framework.system.hardware.Drive;
-import net.lecousin.framework.system.hardware.Drives;
-import net.lecousin.framework.system.hardware.PhysicalDrive;
-import net.lecousin.framework.system.hardware.PhysicalDrive.InterfaceType;
+import net.lecousin.framework.system.hardware.drive.DiskPartition;
+import net.lecousin.framework.system.hardware.drive.DiskPartitionTable;
+import net.lecousin.framework.system.hardware.drive.Drive;
+import net.lecousin.framework.system.hardware.drive.DriveListener;
+import net.lecousin.framework.system.hardware.drive.Drives;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive.InterfaceType;
 import net.lecousin.framework.system.windows.WMI;
 import net.lecousin.framework.system.windows.Win32HandleStream;
 import net.lecousin.framework.system.windows.Win32IOException;
+import net.lecousin.framework.system.windows.WindowsEventListener;
 import net.lecousin.framework.system.windows.WindowsSystem;
 import net.lecousin.framework.system.windows.WindowsUtil;
 import net.lecousin.framework.system.windows.jna.Kernel32;
@@ -46,22 +46,11 @@ import net.lecousin.framework.system.windows.jna.Kernel32;
 /** Drives implementation for Windows. */
 public class DrivesWin extends Drives {
 
-	private WorkProgress init = null;
-	
 	@Override
-	public synchronized WorkProgress initialize() {
-		if (init != null) return init;
-		init = new WorkProgressImpl(100000, "Loading drives information");
-		new Thread("Initializing Drives Information") {
-			@Override
-			public void run() {
-				WindowsSystem.addSystemEventListener(WM_DEVICECHANGE, deviceChangeListener);
-				loadDrives(init);
-				LCSystem.log.info("Drives information initialized");
-				init.done();
-			}
-		}.start();
-		return init;
+	protected void initializeDrives(WorkProgress progress) {
+		((WindowsSystem)LCSystem.get()).addSystemEventListener(WM_DEVICECHANGE, deviceChangeListener);
+		loadDrives(progress);
+		progress.done();
 	}
 	
 	
@@ -69,7 +58,8 @@ public class DrivesWin extends Drives {
 	private static final int DBT_DEVICE_ARRIVAL = 0x8000;
 	private static final int DBT_DEVICE_REMOVECOMPLETE = 0x8004;
 	private static final int DBT_DEVNODES_CHANGED = 0x0007; // A device has been added to or removed from the system.
-	private WindowsSystem.WindowsListener deviceChangeListener = (eventId, uParam, lParam) -> {
+	
+	private WindowsEventListener deviceChangeListener = (eventId, uParam, lParam) -> {
 		switch (uParam.intValue()) {
 		case DBT_DEVICE_ARRIVAL:
 		case DBT_DEVICE_REMOVECOMPLETE:
@@ -399,7 +389,7 @@ public class DrivesWin extends Drives {
         	// fill partition information
         	try (IO stream = openReadOnly(drive, Task.Priority.IMPORTANT)) {
 	    		List<DiskPartition> partitions = new ArrayList<>();
-	    		DiskPartitionsUtil.readPartitionTable((IO.Readable.Seekable)stream, partitions);
+	    		DiskPartitionTable.readPartitionTable((IO.Readable.Seekable)stream, partitions);
 	    		for (DiskPartition p : partitions) {
 	    			boolean found = false;
 	    			for (DiskPartition dp : drive.partitions) {
@@ -422,14 +412,10 @@ public class DrivesWin extends Drives {
 	    				drive.partitions.add(p);
 	    			}
 	    		}
-        	} catch (Win32IOException e) {
-        		switch (e.getErrorNumber()) {
-        		case WinError.ERROR_ACCESS_DENIED: // ignore the access denied, as this is not really an error, only lack of privileges
-        			break;
-        		default:
-            		if (LCSystem.log.error())
-            			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);
-        		}
+        	} catch (AccessDeniedException e) {
+        		// ignore the access denied, as this is not really an error, only lack of privileges
+        		if (LCSystem.log.info())
+        			LCSystem.log.info("Not enough privileges to access to the drive " + drive.osId);
         	} catch (Exception e) {
         		if (LCSystem.log.error())
         			LCSystem.log.error("Error reading partition table of drive " + drive.osId, e);

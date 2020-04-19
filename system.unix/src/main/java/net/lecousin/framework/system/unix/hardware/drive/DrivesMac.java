@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.hardware;
+package net.lecousin.framework.system.unix.hardware.drive;
 
 import java.io.Closeable;
 import java.io.File;
@@ -19,13 +19,13 @@ import net.lecousin.framework.io.IO.KnownSize;
 import net.lecousin.framework.io.IO.Readable.Seekable;
 import net.lecousin.framework.mutable.Mutable;
 import net.lecousin.framework.progress.WorkProgress;
-import net.lecousin.framework.progress.WorkProgressImpl;
 import net.lecousin.framework.system.LCSystem;
-import net.lecousin.framework.system.hardware.DiskPartition;
-import net.lecousin.framework.system.hardware.Drive;
-import net.lecousin.framework.system.hardware.Drives;
-import net.lecousin.framework.system.hardware.PhysicalDrive;
-import net.lecousin.framework.system.hardware.PhysicalDrive.InterfaceType;
+import net.lecousin.framework.system.hardware.drive.DiskPartition;
+import net.lecousin.framework.system.hardware.drive.Drive;
+import net.lecousin.framework.system.hardware.drive.DriveListener;
+import net.lecousin.framework.system.hardware.drive.Drives;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
+import net.lecousin.framework.system.hardware.drive.PhysicalDrive.InterfaceType;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
 import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFDictionaryRef;
@@ -45,21 +45,10 @@ import net.lecousin.framework.util.ProcessUtil;
  */
 public class DrivesMac extends Drives {
 
-	private WorkProgress init = null;
-
 	@Override
-	public WorkProgress initialize() {
-		if (init != null) return init;
-		init = new WorkProgressImpl(100000, "Loading drives information");
-		new Thread("Initializing Drives Information") {
-			@Override
-			public void run() {
-				initDrives(init);
-				LCSystem.log.info("Drives information initialized");
-				init.done();
-			}
-		}.start();
-		return init;
+	protected void initializeDrives(WorkProgress progress) {
+		initDrives(progress);
+		progress.done();
 	}
 
 	private List<Drive> drives = new ArrayList<>();

@@ -1,23 +1,26 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.lecousin.framework.system</groupId>
   <artifactId>parent-pom</artifactId>
-  <version>0.2.6</version>
+  <version>0.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  
+
   <parent>
-  	<groupId>net.lecousin</groupId>
-  	<artifactId>parent-pom</artifactId>
-  	<version>20191012.2</version>
+    <groupId>net.lecousin</groupId>
+    <artifactId>parent-pom</artifactId>
+    <version>20200318</version>
   </parent>
-  
+
   <modules>
     <module>system-api</module>
     <module>system-impl</module>
     <module>system.unix</module>
     <module>system.windows</module>
+    <module>system-tests</module>
   </modules>
-  
+
   <licenses>
     <license>
       <name>Apache 2.0</name>
@@ -25,22 +28,33 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-    
+
   <developers>
     <developer>
-    	<id>lecousin</id>
-    	<name>Guillaume Le Cousin</name>
+      <id>lecousin</id>
+      <name>Guillaume Le Cousin</name>
     </developer>
   </developers>
-  
+
+  <properties>
+    <lc.core.version>0.21.0-SNAPSHOT</lc.core.version>
+  </properties>
+
   <dependencyManagement>
-  	<dependencies>
-  		<dependency>
-	  		<groupId>net.lecousin</groupId>
-	  		<artifactId>core</artifactId>
-	  		<version>0.20.0</version>
-  		</dependency>
-  	</dependencies>
+    <dependencies>
+      <dependency>
+        <groupId>net.lecousin</groupId>
+        <artifactId>core</artifactId>
+        <version>${lc.core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.lecousin</groupId>
+        <artifactId>core</artifactId>
+        <version>${lc.core.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
   </dependencyManagement>
-  
+
 </project>

@@ -20,30 +20,48 @@ import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
 import com.sun.jna.platform.win32.Wtsapi32;
 
 import net.lecousin.framework.application.LCCore;
+import net.lecousin.framework.concurrent.threads.SystemThread;
+import net.lecousin.framework.concurrent.threads.Threading;
+import net.lecousin.framework.system.LCSystem;
+import net.lecousin.framework.system.windows.hardware.WindowsHardware;
 import net.lecousin.framework.system.windows.jna.User32;
+import net.lecousin.framework.system.windows.software.WindowsSoftware;
 
 // skip checkstyle: ParameterName
 // skip checkstyle: LocalVariableName
 /**
  * Utilities for Windows system.
  */
-public final class WindowsSystem {
+public final class WindowsSystem extends LCSystem {
 	
-	private WindowsSystem() {
-		// no instance
+	WindowsSystem() {
+		startEventHandler();
+		hardware = new WindowsHardware();
+		software = new WindowsSoftware();
 	}
+	
+	private WindowsHardware hardware;
+	private WindowsSoftware software;
 
-	/** Listener of Windows events. */
-	public static interface WindowsListener {
-		/** Called when Windows raises an event. */
-		public void fire(int eventId, WPARAM uParam, LPARAM lParam);
+	private HWND hWnd;
+	private Map<Integer,List<WindowsEventListener>> listeners = new HashMap<>();
+	
+	@Override
+	public WindowsHardware getHardware() {
+		// TODO Auto-generated method stub
+		return hardware;
+	}
+	
+	@Override
+	public WindowsSoftware getSoftware() {
+		return software;
 	}
 	
 	/** Add a listener for a specific event. */
-	public static void addSystemEventListener(int eventId, WindowsListener listener) {
+	public void addSystemEventListener(int eventId, WindowsEventListener listener) {
 		Integer i = Integer.valueOf(eventId);
 		synchronized (listeners) {
-			List<WindowsListener> list = listeners.get(i);
+			List<WindowsEventListener> list = listeners.get(i);
 			if (list == null) {
 				list = new ArrayList<>();
 				listeners.put(i, list);
@@ -52,17 +70,12 @@ public final class WindowsSystem {
 		}
 	}
 	
-	public static HWND getHiddenWindow() { return hWnd; }
-
-	
-	private static HWND hWnd;
-	private static Map<Integer,List<WindowsListener>> listeners = new HashMap<>();
+	public HWND getHiddenWindow() { return hWnd; }
 
 	private static final int WM_NCCREATE = 0x0081;
-	private static WinUser.WindowProc wndProc = new WinUser.WindowProc() {
+	private WinUser.WindowProc wndProc = new WinUser.WindowProc() {
 		@Override
 		public LRESULT callback(HWND hWnd, int uMsg, WPARAM uParam, LPARAM lParam) {
-			//System.out.println("Callback: "+uMsg+" / "+uParam.longValue()+" / "+lParam.longValue());
 			switch (uMsg) {
 	        case WM_NCCREATE:
 	        case WinUser.WM_QUIT:
@@ -70,9 +83,9 @@ public final class WindowsSystem {
 	        default:
 			}
 			synchronized (listeners) {
-				List<WindowsListener> list = listeners.get(Integer.valueOf(uMsg));
+				List<WindowsEventListener> list = listeners.get(Integer.valueOf(uMsg));
 				if (list != null) {
-					for (WindowsListener listener : list)
+					for (WindowsEventListener listener : list)
 						listener.fire(uMsg, uParam, lParam);
 				}
 			}
@@ -80,8 +93,8 @@ public final class WindowsSystem {
 		}
 	};
 	
-	static {
-		new Thread("Windows Event Handler") {
+	private void startEventHandler() {
+		Thread t = Threading.createSystemThread(new SystemThread() {
 			@Override
 			public void run() {
 				// define new window class
@@ -130,7 +143,14 @@ public final class WindowsSystem {
 				User32.INSTANCE.UnregisterClass(windowClass, hInst);
 				User32.INSTANCE.DestroyWindow(hWnd);
 			}
-		}.start();
+			
+			@Override
+			public void debugStatus(StringBuilder s) {
+				// nothing to say
+			}
+		});
+		t.setName("Windows Event Handler");
+		t.start();
 		LCCore.get().toClose(() -> User32.INSTANCE.PostMessage(hWnd, WinUser.WM_QUIT, new WPARAM(0), new LPARAM(0)));
 	}
 

@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.unix.software;
+package net.lecousin.framework.system.unix.software.process;
 
 import java.io.Closeable;
 import java.io.File;
@@ -9,8 +9,10 @@ import java.util.regex.Pattern;
 
 import net.lecousin.framework.application.Application;
 import net.lecousin.framework.application.LCCore;
+import net.lecousin.framework.concurrent.threads.ApplicationThread;
 import net.lecousin.framework.event.SimpleEvent;
-import net.lecousin.framework.system.software.Processes;
+import net.lecousin.framework.system.software.process.Processes;
+import net.lecousin.framework.system.software.process.SeparateProcess;
 import net.lecousin.framework.system.unix.jna.LibC;
 
 /**
@@ -55,33 +57,44 @@ public class ProcessesUnix extends Processes {
 		return 0;
 	}
 	
-	private static class SeparateProcess implements Processes.SeparateProcess, Closeable {
-		private SeparateProcess(Process process, String command) {
+	private static class SeparateProcessUnix implements SeparateProcess, Closeable {
+		private SeparateProcessUnix(Process process, String command) {
 			this.p = process;
 			Application app = LCCore.getApplication();
-			thread = app.getThreadFactory().newThread(new WaitFor());
+			thread = app.createThread(new WaitFor());
 			thread.setName("Wait for process to terminate: " + command);
 			thread.start();
 			app.toClose(1, this);
 		}
 		
+		private Application app;
 		private Process p;
 		private Thread thread;
 		private Integer exitCode = null;
 		private SimpleEvent terminated = new SimpleEvent();
 		
-		private class WaitFor implements Runnable {
+		private class WaitFor implements ApplicationThread {
+			@Override
+			public Application getApplication() {
+				return app;
+			}
+			
 			@Override
 			public void run() {
 				try {
-					SeparateProcess.this.exitCode = Integer.valueOf(p.waitFor());
+					SeparateProcessUnix.this.exitCode = Integer.valueOf(p.waitFor());
 					terminated.fire();
 				} catch (InterruptedException e) {
 					// stop
 				} finally {
 					if (p.isAlive()) p.destroyForcibly();
-					LCCore.getApplication().closed(SeparateProcess.this);
+					LCCore.getApplication().closed(SeparateProcessUnix.this);
 				}
+			}
+
+			@Override
+			public void debugStatus(StringBuilder s) {
+				s.append(" - ").append(thread.getName()).append('\n');
 			}
 		}
 		
@@ -95,7 +108,7 @@ public class ProcessesUnix extends Processes {
 		@Override
 		public void kill() {
 			p.destroyForcibly();
-			LCCore.getApplication().closed(SeparateProcess.this);
+			LCCore.getApplication().closed(SeparateProcessUnix.this);
 		}
 		
 		@Override
@@ -117,7 +130,7 @@ public class ProcessesUnix extends Processes {
 	}
 	
 	@Override
-	public SeparateProcess executeCommand(String[] command, boolean elevated) throws Exception {
+	public SeparateProcessUnix executeCommand(String[] command, boolean elevated) throws Exception {
 		//if (elevated)
 		//	return executeElevated(command);
 		/*
@@ -129,7 +142,7 @@ public class ProcessesUnix extends Processes {
 		command = args;*/
 		ProcessBuilder builder = new ProcessBuilder(command);
 		Process p = builder.start();
-		return new SeparateProcess(p, Arrays.toString(command));
+		return new SeparateProcessUnix(p, Arrays.toString(command));
 	}
 
 }

@@ -1,4 +1,4 @@
-package net.lecousin.framework.system.hardware;
+package net.lecousin.framework.system.hardware.drive;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,9 +11,9 @@ import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.text.StringUtil;
 
 /**
- * Utility methods for a disk partition.
+ * Utility methods to read a disk partition table.
  */
-public class DiskPartitionsUtil {
+public class DiskPartitionTable {
 
 	/** Read the partition table from a disk content. */
 	public static boolean readPartitionTable(IO.Readable.Seekable content, List<DiskPartition> partitions) {
@@ -61,7 +61,7 @@ public class DiskPartitionsUtil {
 				if (p.type == 5 || p.type == 15) {
 					if (logicStart > 0)
 						p.start += logicStart;
-					ArrayList<DiskPartition> list = new ArrayList<DiskPartition>();
+					ArrayList<DiskPartition> list = new ArrayList<>();
 					if (!readPartitionTable(content, p.start, logicStart > 0 ? logicStart : p.start, list)) return false;
 					for (DiskPartition part : list) {
 						partitions.add(part);
