@@ -3,6 +3,7 @@ package net.lecousin.framework.system.unix.hardware.drive;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -83,20 +84,30 @@ public class DrivesUnixUdev extends Drives {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends IO.Readable.Seekable & IO.KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) {
-		return (T)new FileIO.ReadOnly(new File(drive.getOSId()), priority);
+	public <T extends IO.Readable.Seekable & IO.KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) throws AccessDeniedException {
+		File f = new File(drive.getOSId());
+		if (!f.canRead())
+			throw new AccessDeniedException(drive.getOSId());
+		return (T)new FileIO.ReadOnly(f, priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends IO.Writable.Seekable & IO.KnownSize> T openWriteOnly(PhysicalDrive drive, Priority priority) {
-		return (T)new FileIO.WriteOnly(new File(drive.getOSId()), priority);
+	public <T extends IO.Writable.Seekable & IO.KnownSize> T openWriteOnly(PhysicalDrive drive, Priority priority) throws AccessDeniedException {
+		File f = new File(drive.getOSId());
+		if (!f.canWrite())
+			throw new AccessDeniedException(drive.getOSId());
+		return (T)new FileIO.WriteOnly(f, priority);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends  IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable> T openReadWrite(PhysicalDrive drive, Priority priority) {
-		return (T)new FileIO.ReadWrite(new File(drive.getOSId()), priority);
+	public <T extends  IO.Readable.Seekable & IO.KnownSize & IO.Writable.Seekable> T openReadWrite(PhysicalDrive drive, Priority priority)
+	throws AccessDeniedException {
+		File f = new File(drive.getOSId());
+		if (!f.canRead() || !f.canWrite())
+			throw new AccessDeniedException(drive.getOSId());
+		return (T)new FileIO.ReadWrite(f, priority);
 	}
 
 	private void initDrives(WorkProgress progress) {
@@ -438,8 +449,10 @@ public class DrivesUnixUdev extends Drives {
     				signalNewPartition(p);
     			}
     		}
-    	} catch (Exception t) {
-    		// TODO
+    	} catch (AccessDeniedException e) {
+    		LCSystem.log.info("Not enough privileges to access to drive " + drive);
+    	} catch (Exception e) {
+    		LCSystem.log.error("Unable to read partitions for drive " + drive, e);
     	}
 	}
 	

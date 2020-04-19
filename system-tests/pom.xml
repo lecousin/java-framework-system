@@ -33,6 +33,14 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+          <skipIfEmpty>true</skipIfEmpty>
+        </configuration>
+      </plugin>
+    
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <executions>
