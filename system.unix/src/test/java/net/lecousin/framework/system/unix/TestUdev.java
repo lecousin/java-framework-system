@@ -56,6 +56,8 @@ public class TestUdev {
 				String type = udev.udev_device_get_devtype(device);
 				System.out.println("Device type: " + type);
 				
+				String vendor = udev.udev_device_get_property_value(device, "ID_VENDOR");
+				System.out.println("Vendor: " + vendor);
 				String model = udev.udev_device_get_property_value(device, "ID_MODEL");
 				System.out.println("Model: " + model);
 				String serial = udev.udev_device_get_property_value(device, "ID_SERIAL_SHORT");

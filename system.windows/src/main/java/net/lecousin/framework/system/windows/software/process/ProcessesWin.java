@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.sun.jna.platform.win32.Shell32;
 import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinBase.FILETIME;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.ptr.IntByReference;
 
@@ -47,15 +48,15 @@ public class ProcessesWin extends Processes {
 	public long getProcessCPUTimeNano(int id) {
 		HANDLE h = com.sun.jna.platform.win32.Kernel32.INSTANCE.OpenProcess(0x0400, false, id);
 		if (h == null) return -1;
-		byte[] creation = new byte[8];
-		byte[] exit = new byte[8];
-		byte[] kernel = new byte[8];
-		byte[] user = new byte[8];
+		FILETIME creation = new FILETIME();
+		FILETIME exit = new FILETIME();
+		FILETIME kernel = new FILETIME();
+		FILETIME user = new FILETIME();
 		boolean res = Kernel32.INSTANCE.GetProcessTimes(h, creation, exit, kernel, user);
 		com.sun.jna.platform.win32.Kernel32.INSTANCE.CloseHandle(h);
 		if (!res) return -1;
 		// times are in 100-nanoseconds units, so we multiply it by 100 to get an approximation of nanoseconds
-		return (DataUtil.Read64.LE.read(kernel, 0) + DataUtil.Read64.LE.read(user, 0)) * 100;
+		return (kernel.toDWordLong().longValue() + user.toDWordLong().longValue()) * 100;
 	}
 	
 	@Override

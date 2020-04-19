@@ -11,7 +11,7 @@ import com.sun.jna.ptr.IntByReference;
 // skip checkstyle: JavadocMethod
 public interface Ntdll extends com.sun.jna.platform.win32.NtDll {
 
-    Ntdll INSTANCE = Native.loadLibrary("Ntdll", Ntdll.class);
+    Ntdll INSTANCE = Native.load("Ntdll", Ntdll.class);
     // Optional: wraps every call to the native library in a
     // synchronized block, limiting native calls to one at a time
     Ntdll SYNC_INSTANCE = (Ntdll) Native.synchronizedLibrary(INSTANCE);

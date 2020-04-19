@@ -2,6 +2,7 @@ package net.lecousin.framework.system.unix;
 
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import com.sun.jna.platform.mac.SystemB;
 
 import net.lecousin.framework.plugins.CustomExtensionPoint;
 import net.lecousin.framework.system.LCSystem;
@@ -11,7 +12,6 @@ import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
 import net.lecousin.framework.system.unix.jna.mac.IOKit;
 import net.lecousin.framework.system.unix.jna.mac.RunLoopThread;
-import net.lecousin.framework.system.unix.jna.mac.SystemB;
 
 /**
  * Initialization.
@@ -22,11 +22,11 @@ public class Init implements CustomExtensionPoint {
 	public Init() {
 		if (Platform.isMac()) {
 			try {
-				JnaInstances.diskArbitration = Native.loadLibrary("DiskArbitration", DiskArbitration.class);
-				JnaInstances.coreFoundation = Native.loadLibrary("CoreFoundation", CoreFoundation.class);
+				JnaInstances.diskArbitration = Native.load("DiskArbitration", DiskArbitration.class);
+				JnaInstances.coreFoundation = Native.load("CoreFoundation", CoreFoundation.class);
 				JnaInstances.ALLOCATOR = JnaInstances.coreFoundation.CFAllocatorGetDefault();
-				JnaInstances.ioKit = Native.loadLibrary("IOKit", IOKit.class);
-				JnaInstances.systemB = Native.loadLibrary("System", SystemB.class);
+				JnaInstances.ioKit = Native.load("IOKit", IOKit.class);
+				JnaInstances.systemB = Native.load("System", SystemB.class);
 				RunLoopThread.init();
 			} catch (Throwable t) {
 				LCSystem.log.error("Error loading native libraries for Mac", t);

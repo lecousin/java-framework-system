@@ -10,7 +10,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.platform.mac.CoreFoundation.CFBooleanRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFDictionaryRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFIndex;
+import com.sun.jna.platform.mac.CoreFoundation.CFMutableDictionaryRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFNumberRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFStringRef;
+import com.sun.jna.platform.mac.DiskArbitration.DADiskRef;
+import com.sun.jna.platform.mac.DiskArbitration.DASessionRef;
+import com.sun.jna.platform.mac.IOKit.IOIterator;
+import com.sun.jna.platform.mac.IOKit.IORegistryEntry;
+import com.sun.jna.platform.mac.IOKitUtil;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.platform.mac.SystemB.Statfs;
 
 import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.concurrent.threads.Task.Priority;
@@ -26,16 +38,8 @@ import net.lecousin.framework.system.hardware.drive.Drives;
 import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 import net.lecousin.framework.system.hardware.drive.PhysicalDrive.InterfaceType;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFDictionaryRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFMutableDictionaryRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFStringRef;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskRef;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DASessionRef;
 import net.lecousin.framework.system.unix.jna.mac.IOKit;
-import net.lecousin.framework.system.unix.jna.mac.SystemB;
-import net.lecousin.framework.system.unix.jna.mac.SystemB.Statfs;
 import net.lecousin.framework.util.Pair;
 import net.lecousin.framework.util.ProcessUtil;
 
@@ -96,17 +100,16 @@ public class DrivesMac extends Drives {
 		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
 		
         List<String> bsdNames = new ArrayList<>();
-        IntByReference iter = new IntByReference();
-        IOKit.Util.getMatchingServices("IOMedia", iter);
-        int media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
-        while (media != 0) {
+        IOIterator iter = IOKitUtil.getMatchingServices("IOMedia");
+        IORegistryEntry media = iter.next();
+        while (media != null) {
         	//if (IOKit.Util.getIORegistryBooleanProperty(media, "Whole")) {
         	DADiskRef disk = da.DADiskCreateFromIOMedia(JnaInstances.ALLOCATOR, session, media);
         	String name = da.DADiskGetBSDName(disk);
         	bsdNames.add(name);
         	//}
         	JnaInstances.ioKit.IOObjectRelease(media);
-        	media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
+        	media = iter.next();
         }
 		
         Mutable<List<Pair<String, String>>> bsdNamesMountPoints = new Mutable<>(null);
@@ -129,7 +132,7 @@ public class DrivesMac extends Drives {
 			(disk, context) -> diskRemoved(disk), null);
 		
 		da.DASessionScheduleWithRunLoop(
-			session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode")
+			session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.createCFString("kCFRunLoopDefaultMode")
 		);
 		
 		LCCore.get().toClose(() -> JnaInstances.coreFoundation.CFRelease(session));
@@ -203,19 +206,19 @@ public class DrivesMac extends Drives {
 		return null;
 	}
 	
-	private static final CFStringRef strDADeviceModel = CFStringRef.toCFString("DADeviceModel");
-    private static final CFStringRef strDAMediaSize = CFStringRef.toCFString("DAMediaSize");
-    private static final CFStringRef strDAMediaBSDName = CFStringRef.toCFString("DAMediaBSDName");
-	private static final CFStringRef strDAMediaWhole = CFStringRef.toCFString("DAMediaWhole");
-	private static final CFStringRef strDABusPath = CFStringRef.toCFString("DABusPath");
-	private static final CFStringRef strDABusName = CFStringRef.toCFString("DABusName");
-	private static final CFStringRef strDADeviceVendor = CFStringRef.toCFString("DADeviceVendor");
-	private static final CFStringRef strDAMediaRemovable = CFStringRef.toCFString("DAMediaRemovable");
-	private static final CFStringRef strDADeviceRevision = CFStringRef.toCFString("DADeviceRevision");
-    private static final CFStringRef strDAVolumeKind = CFStringRef.toCFString("DAVolumeKind");
-    private static final CFStringRef strDAVolumeName = CFStringRef.toCFString("DAVolumeName");
-    private static final CFStringRef strModel = CFStringRef.toCFString("Model");
-    private static final CFStringRef strIOPropertyMatch = CFStringRef.toCFString("IOPropertyMatch");
+	private static final CFStringRef strDADeviceModel = CFStringRef.createCFString("DADeviceModel");
+    private static final CFStringRef strDAMediaSize = CFStringRef.createCFString("DAMediaSize");
+    private static final CFStringRef strDAMediaBSDName = CFStringRef.createCFString("DAMediaBSDName");
+	private static final CFStringRef strDAMediaWhole = CFStringRef.createCFString("DAMediaWhole");
+	private static final CFStringRef strDABusPath = CFStringRef.createCFString("DABusPath");
+	private static final CFStringRef strDABusName = CFStringRef.createCFString("DABusName");
+	private static final CFStringRef strDADeviceVendor = CFStringRef.createCFString("DADeviceVendor");
+	private static final CFStringRef strDAMediaRemovable = CFStringRef.createCFString("DAMediaRemovable");
+	private static final CFStringRef strDADeviceRevision = CFStringRef.createCFString("DADeviceRevision");
+    private static final CFStringRef strDAVolumeKind = CFStringRef.createCFString("DAVolumeKind");
+    private static final CFStringRef strDAVolumeName = CFStringRef.createCFString("DAVolumeName");
+    private static final CFStringRef strModel = CFStringRef.createCFString("Model");
+    private static final CFStringRef strIOPropertyMatch = CFStringRef.createCFString("IOPropertyMatch");
 	
 	private void newDisk(DADiskRef disk, Mutable<List<Pair<String, String>>> bsdNamesMountPoints, Mutable<List<DiskImageInfo>> diskImages) {
 		DiskArbitration da = JnaInstances.diskArbitration;
@@ -223,15 +226,15 @@ public class DrivesMac extends Drives {
 		if (diskInfo == null) return;
 		
 		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
-		String model = CoreFoundation.Util.cfPointerToString(ptr);
+		String model = new CFStringRef(ptr).stringValue();
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaSize);
-		long size = ptr == null ? -1 : CoreFoundation.Util.cfPointerToLong(ptr);
+		long size = ptr == null ? -1 : new CFNumberRef(ptr).longValue();
 
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
-		String bsdName = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		String bsdName = ptr == null ? null : new CFStringRef(ptr).stringValue();
 		
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaWhole);
-		if (ptr != null && CoreFoundation.Util.cfPointerToBoolean(ptr)) {
+		if (ptr != null && new CFBooleanRef(ptr).booleanValue()) {
 			if ("Disk Image".equals(model)) {
 				newDiskImage(bsdName, bsdNamesMountPoints, diskImages);
 				return;
@@ -241,43 +244,42 @@ public class DrivesMac extends Drives {
 			drive.model = model;
 			drive.size = BigInteger.valueOf(size);
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
-			drive.osId = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			drive.osId = ptr == null ? null : new CFStringRef(ptr).stringValue();
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceVendor);
-			drive.manufacturer = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			drive.manufacturer = ptr == null ? null : new CFStringRef(ptr).stringValue();
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaRemovable);
-			drive.removable = ptr == null ? false : CoreFoundation.Util.cfPointerToBoolean(ptr);
+			drive.removable = ptr == null ? false : new CFBooleanRef(ptr).booleanValue();
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceRevision);
-			drive.version = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			drive.version = ptr == null ? null : new CFStringRef(ptr).stringValue();
 			ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusName);
-			String s = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+			String s = ptr == null ? null : new CFStringRef(ptr).stringValue();
 			if ("scsi".equals(s))
 				drive.itype = InterfaceType.SCSI;
 			else
 				drive.itype = InterfaceType.Unknown; // TODO
 			drive.type = PhysicalDrive.Type.UNKNOWN; // TODO
 			
-			CFStringRef modelNameRef = CFStringRef.toCFString(model);
+			CFStringRef modelNameRef = CFStringRef.createCFString(model);
 			CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(
-					JnaInstances.ALLOCATOR, 0, null, null);
+					JnaInstances.ALLOCATOR, new CFIndex(0), null, null);
 			JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, strModel, modelNameRef);
 			CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(
-					JnaInstances.ALLOCATOR, 0, null, null);
+					JnaInstances.ALLOCATOR, new CFIndex(0), null, null);
 			JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, strIOPropertyMatch, propertyDict);
 
-			IntByReference serviceIterator = new IntByReference();
 			// getMatchingServices releases matchingDict
-			IOKit.Util.getMatchingServices(matchingDict, serviceIterator);
-			int sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
-			while (sdService != 0) {
+			IOIterator serviceIterator = IOKitUtil.getMatchingServices(matchingDict);
+			IORegistryEntry sdService = serviceIterator.next();
+			while (sdService != null) {
 				// look up the serial number
 				drive.serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
 				JnaInstances.ioKit.IOObjectRelease(sdService);
 				if (drive.serial != null)
 					break;
 				// iterate
-				sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
+				sdService = serviceIterator.next();
 			}
-			JnaInstances.ioKit.IOObjectRelease(serviceIterator.getValue());
+			serviceIterator.release();
 			JnaInstances.coreFoundation.CFRelease(modelNameRef);
 			JnaInstances.coreFoundation.CFRelease(propertyDict);
 			newDrive(drive);
@@ -288,7 +290,7 @@ public class DrivesMac extends Drives {
 		DiskPartition part = new DiskPartition();
 		part.size = size;
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDABusPath);
-		String osId = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		String osId = ptr == null ? null : new CFStringRef(ptr).stringValue();
 		synchronized (drives) {
 			for (Drive d : drives)
 				if (((PhysicalDriveUnix)d).osId != null && ((PhysicalDriveUnix)d).osId.equals(osId)) {
@@ -299,9 +301,9 @@ public class DrivesMac extends Drives {
 		if (part.drive == null) return;
 		part.OSID = bsdName;
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeKind);
-		part.filesystem = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		part.filesystem = ptr == null ? null : new CFStringRef(ptr).stringValue();
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAVolumeName);
-		part.name = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		part.name = ptr == null ? null : new CFStringRef(ptr).stringValue();
 		part.mountPoint = getMountPointFromDeviceName(DEV_ROOT + bsdName, bsdNamesMountPoints);
 		for (DiskPartition p : ((PhysicalDriveUnix)part.drive).partitions) {
 			if (p.OSID.equals(bsdName))
@@ -317,13 +319,13 @@ public class DrivesMac extends Drives {
 		if (diskInfo == null) return;
 		
 		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
-		String model = CoreFoundation.Util.cfPointerToString(ptr);
+		String model = new CFStringRef(ptr).stringValue();
 
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
-		String bsdName = ptr == null ? null : CoreFoundation.Util.cfPointerToString(ptr);
+		String bsdName = ptr == null ? null : new CFStringRef(ptr).stringValue();
 		
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaWhole);
-		if (ptr != null && CoreFoundation.Util.cfPointerToBoolean(ptr)) {
+		if (ptr != null && new CFBooleanRef(ptr).booleanValue()) {
 			if ("Disk Image".equals(model)) {
 				diskImageRemoved(bsdName);
 				return;

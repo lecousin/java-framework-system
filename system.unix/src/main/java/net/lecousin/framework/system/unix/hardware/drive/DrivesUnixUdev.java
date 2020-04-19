@@ -271,6 +271,7 @@ public class DrivesUnixUdev extends Drives {
 	private void newDisk(Udev udev, Udev.UdevDevice device) {
 		String devnode = udev.udev_device_get_devnode(device);
 		String devpath = udev.udev_device_get_property_value(device, "DEVPATH");
+		String vendor = udev.udev_device_get_property_value(device, "ID_VENDOR");
 		String model = udev.udev_device_get_property_value(device, "ID_MODEL");
 		String serial = udev.udev_device_get_property_value(device, "ID_SERIAL_SHORT");
 		String revision = udev.udev_device_get_property_value(device, "ID_REVISION");
@@ -291,6 +292,7 @@ public class DrivesUnixUdev extends Drives {
 		PhysicalDriveUnix drive = new PhysicalDriveUnix();
 		drive.devpath = devpath;
 		drive.osId = devnode;
+		drive.manufacturer = vendor;
 		drive.model = model;
 		drive.version = revision;
 		drive.serial = serial;
@@ -348,7 +350,45 @@ public class DrivesUnixUdev extends Drives {
 			DiskPartition p = new DiskPartition();
 			p.drive = drive;
 			p.OSID = osId;
-			String s = udev.udev_device_get_property_value(device, "PARTN");
+			p.filesystem = udev.udev_device_get_property_value(device, "ID_FS_TYPE");
+			
+			String s = udev.udev_device_get_property_value(device, "ID_PART_ENTRY_OFFSET");
+			if (s != null) {
+				try {
+					p.start = Long.parseLong(s);
+				} catch (Exception e) {
+					// ignore
+				}
+			} else {
+				s = udev.udev_device_get_sysattr_value(device, "start");
+				if (s != null) {
+					try {
+						p.start = Long.parseLong(s);
+					} catch (Exception e) {
+						// ignore
+					}
+				}
+			}
+			
+			s = udev.udev_device_get_property_value(device, "ID_PART_ENTRY_SIZE");
+			if (s != null) {
+				try {
+					p.size = Long.parseLong(s);
+				} catch (Exception e) {
+					// ignore
+				}
+			} else {
+				s = udev.udev_device_get_sysattr_value(device, "size");
+				if (s != null) {
+					try {
+						p.size = Long.parseLong(s);
+					} catch (Exception e) {
+						// ignore
+					}
+				}
+			}
+			
+			s = udev.udev_device_get_property_value(device, "PARTN");
 			if (s != null)
 				try { p.index = Integer.parseInt(s); }
 				catch (NumberFormatException e) { /* ignore */ }

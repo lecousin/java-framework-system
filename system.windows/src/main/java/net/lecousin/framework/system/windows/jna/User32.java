@@ -12,7 +12,7 @@ import com.sun.jna.win32.W32APIOptions;
 // skip checkstyle: JavadocMethod
 public interface User32 extends com.sun.jna.platform.win32.User32 {
 
-	public static final User32 INSTANCE = Native.loadLibrary("user32", User32.class, W32APIOptions.UNICODE_OPTIONS);
+	public static final User32 INSTANCE = Native.load("user32", User32.class, W32APIOptions.UNICODE_OPTIONS);
 
 	/**
 	 * Changes an attribute of the specified window.
@@ -22,5 +22,4 @@ public interface User32 extends com.sun.jna.platform.win32.User32 {
 	 */
 	public int SetWindowLong(HWND hWnd, int nIndex, Callback callback);
     
-	public LRESULT SendMessage(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lParam);
 }

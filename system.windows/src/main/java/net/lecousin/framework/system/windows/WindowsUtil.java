@@ -23,7 +23,7 @@ public final class WindowsUtil {
 	public static List<String> toStrings(byte[] buffer) {
         int i = 0;
     	boolean lastzero = true;
-    	String s = "";
+    	StringBuilder s = new StringBuilder();
     	List<String> list = new LinkedList<>();
     	do {
     		char c = (char)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
@@ -31,15 +31,40 @@ public final class WindowsUtil {
     		if (c == 0) {
     			if (lastzero) break;
     			lastzero = true;
-   				list.add(s);
-    			s = "";
+    			list.add(s.toString());
+    			s = new StringBuilder();
     			continue;
     		}
     		lastzero = false;
-    		s += c;
+    		s.append(c);
     	} while (i < buffer.length);
-		if (!s.isEmpty())
-			list.add(s);
+    	if (s.length() != 0)
+			list.add(s.toString());
+    	return list;		
+		
+	}
+	
+	/** Return a list of String from a buffer containing strings separated by 0. */
+	public static List<String> toStrings(char[] buffer) {
+        int i = 0;
+    	boolean lastzero = true;
+    	StringBuilder s = new StringBuilder();
+    	List<String> list = new LinkedList<>();
+    	do {
+    		char c = buffer[i];
+    		i++;
+    		if (c == 0) {
+    			if (lastzero) break;
+    			lastzero = true;
+   				list.add(s.toString());
+    			s = new StringBuilder();
+    			continue;
+    		}
+    		lastzero = false;
+    		s.append(c);
+    	} while (i < buffer.length);
+		if (s.length() != 0)
+			list.add(s.toString());
     	return list;		
 		
 	}

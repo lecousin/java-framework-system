@@ -4,6 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.platform.mac.CoreFoundation.CFArrayRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFBooleanRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFDictionaryRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFIndex;
+import com.sun.jna.platform.mac.CoreFoundation.CFMutableDictionaryRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFNumberRef;
+import com.sun.jna.platform.mac.CoreFoundation.CFStringRef;
+import com.sun.jna.platform.mac.DiskArbitration.DADiskRef;
+import com.sun.jna.platform.mac.DiskArbitration.DASessionRef;
+import com.sun.jna.platform.mac.IOKit.IOIterator;
+import com.sun.jna.platform.mac.IOKit.IORegistryEntry;
+import com.sun.jna.platform.mac.IOKitUtil;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.platform.mac.SystemB.Statfs;
 import com.sun.jna.ptr.IntByReference;
 
 import net.lecousin.framework.application.Application;
@@ -11,20 +25,11 @@ import net.lecousin.framework.application.Artifact;
 import net.lecousin.framework.application.Version;
 import net.lecousin.framework.core.test.LCCoreAbstractTest;
 import net.lecousin.framework.system.unix.jna.JnaInstances;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFArrayRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFDictionaryRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFMutableDictionaryRef;
-import net.lecousin.framework.system.unix.jna.mac.CoreFoundation.CFStringRef;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskAppearedCallback;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskDescriptionChangedCallback;
 import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskDisappearedCallback;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DADiskRef;
-import net.lecousin.framework.system.unix.jna.mac.DiskArbitration.DASessionRef;
 import net.lecousin.framework.system.unix.jna.mac.IOKit;
-import net.lecousin.framework.system.unix.jna.mac.SystemB;
-import net.lecousin.framework.system.unix.jna.mac.SystemB.Statfs;
 
 import org.junit.After;
 import org.junit.Before;
@@ -68,7 +73,7 @@ public class TestDiskArbitration {
 			}
 		}, null);
 		
-		da.DASessionScheduleWithRunLoop(instance.session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.toCFString("kCFRunLoopDefaultMode"));
+		da.DASessionScheduleWithRunLoop(instance.session, JnaInstances.coreFoundation.CFRunLoopGetMain(), CFStringRef.createCFString("kCFRunLoopDefaultMode"));
 
 		try { Thread.sleep(10 * 60 * 1000); }
 		catch (InterruptedException e) {}
@@ -104,10 +109,9 @@ public class TestDiskArbitration {
 		DASessionRef session = da.DASessionCreate(JnaInstances.ALLOCATOR);
 		
         List<String> bsdNames = new ArrayList<>();
-        IntByReference iter = new IntByReference();
-        IOKit.Util.getMatchingServices("IOMedia", iter);
-        int media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
-        while (media != 0) {
+        IOIterator iter = IOKitUtil.getMatchingServices("IOMedia");
+        IORegistryEntry media = iter.next();
+        while (media != null) {
             //if (IOKit.Util.getIORegistryBooleanProperty(media, "Whole")) {
                 DADiskRef disk = da.DADiskCreateFromIOMedia(JnaInstances.ALLOCATOR, session, media);
                 String name = da.DADiskGetBSDName(disk);
@@ -115,7 +119,7 @@ public class TestDiskArbitration {
                 bsdNames.add(name);
             //}
             JnaInstances.ioKit.IOObjectRelease(media);
-            media = JnaInstances.ioKit.IOIteratorNext(iter.getValue());
+            media = iter.next();
         }
 
         
@@ -138,37 +142,37 @@ public class TestDiskArbitration {
 		DiskArbitration da = JnaInstances.diskArbitration;
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo != null) {
-			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString("DADeviceModel"));
-			String model = CoreFoundation.Util.cfPointerToString(modelPtr);
-			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString("DAMediaSize"));
-			long size = sizePtr == null ? -1 : CoreFoundation.Util.cfPointerToLong(sizePtr);
+			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.createCFString("DADeviceModel"));
+			String model = new CFStringRef(modelPtr).stringValue();
+			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.createCFString("DAMediaSize"));
+			long size = sizePtr == null ? -1 : new CFNumberRef(sizePtr).longValue();
 
 			// Use the model as a key to get serial from IOKit
 			String serial = null;
 			if (!"Disk Image".equals(model)) {
-				CFStringRef modelNameRef = CFStringRef.toCFString(model);
-				CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
-				JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, CFStringRef.toCFString("Model"), modelNameRef);
-				CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation	.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, 0, null, null);
-				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, CFStringRef.toCFString("IOPropertyMatch"), propertyDict);
+				CFStringRef modelNameRef = CFStringRef.createCFString(model);
+				CFMutableDictionaryRef propertyDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, new CFIndex(0), null, null);
+				JnaInstances.coreFoundation.CFDictionarySetValue(propertyDict, CFStringRef.createCFString("Model"), modelNameRef);
+				CFMutableDictionaryRef matchingDict = JnaInstances.coreFoundation.CFDictionaryCreateMutable(JnaInstances.ALLOCATOR, new CFIndex(0), null, null);
+				JnaInstances.coreFoundation.CFDictionarySetValue(matchingDict, CFStringRef.createCFString("IOPropertyMatch"), propertyDict);
 
-				// search for all IOservices that match the model
-				IntByReference serviceIterator = new IntByReference();
-				IOKit.Util.getMatchingServices(matchingDict, serviceIterator);
-				// getMatchingServices releases matchingDict
 				JnaInstances.coreFoundation.CFRelease(modelNameRef);
 				JnaInstances.coreFoundation.CFRelease(propertyDict);
-				int sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
-				while (sdService != 0) {
+				
+				// search for all IOservices that match the model
+				// getMatchingServices releases matchingDict
+				IOIterator serviceIterator = IOKitUtil.getMatchingServices(matchingDict);
+				IORegistryEntry sdService = serviceIterator.next();
+				while (sdService != null) {
 					// look up the serial number
 					serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
 					JnaInstances.ioKit.IOObjectRelease(sdService);
 					if (serial != null)
 						break;
 					// iterate
-					sdService = JnaInstances.ioKit.IOIteratorNext(serviceIterator.getValue());
+					sdService = serviceIterator.next();
 				}
-				JnaInstances.ioKit.IOObjectRelease(serviceIterator.getValue());
+				serviceIterator.release();
 			}
 
 			System.out.println("Disk: " + model + " - " + serial + " - " + size);
@@ -213,16 +217,16 @@ public class TestDiskArbitration {
 	}
 	
 	private static void printProperty(CFDictionaryRef diskInfo, String propertyName, PropType type) {
-		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.toCFString(propertyName));
+		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.createCFString(propertyName));
 		System.out.print("** " + propertyName);
 		if (ptr == null) {
 			System.out.println("    > NULL");
 			return;
 		}
 		switch (type) {
-		case STRING: System.out.println("    > " + CoreFoundation.Util.cfPointerToString(ptr)); break;
-		case BOOLEAN: System.out.println("    > " + CoreFoundation.Util.cfPointerToBoolean(ptr)); break;
-		case LONG: System.out.println("    > " + CoreFoundation.Util.cfPointerToLong(ptr)); break;
+		case STRING: System.out.println("    > " + new CFStringRef(ptr).stringValue()); break;
+		case BOOLEAN: System.out.println("    > " + new CFBooleanRef(ptr).booleanValue()); break;
+		case LONG: System.out.println("    > " + new CFNumberRef(ptr).longValue()); break;
 		}
 	}
 	

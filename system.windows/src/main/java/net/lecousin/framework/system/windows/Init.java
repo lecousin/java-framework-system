@@ -9,7 +9,7 @@ import net.lecousin.framework.application.LCCore;
 import net.lecousin.framework.plugins.CustomExtensionPoint;
 import net.lecousin.framework.system.LCSystem;
 import net.lecousin.framework.system.windows.jna.Advapi32;
-import net.lecousin.framework.system.windows.jna.Iphlpapi;
+import net.lecousin.framework.system.windows.jna.IPHlpAPI;
 import net.lecousin.framework.system.windows.jna.Kernel32;
 import net.lecousin.framework.system.windows.jna.Ntdll;
 import net.lecousin.framework.system.windows.jna.Psapi;
@@ -24,7 +24,7 @@ public class Init implements CustomExtensionPoint {
 	public Init() {
 		// init libraries
 		if (Advapi32.INSTANCE == null) { /* nothing */ }
-		if (Iphlpapi.INSTANCE == null) { /* nothing */ }
+		if (IPHlpAPI.INSTANCE == null) { /* nothing */ }
 		if (Kernel32.INSTANCE == null) { /* nothing */ }
 		if (Ntdll.INSTANCE == null) { /* nothing */ }
 		if (Psapi.INSTANCE == null) { /* nothing */ }

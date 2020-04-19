@@ -17,7 +17,7 @@ import com.sun.jna.ptr.IntByReference;
 // skip checkstyle: JavadocMethod
 public interface Advapi32 extends com.sun.jna.platform.win32.Advapi32 {
 
-	Advapi32 INSTANCE = Native.loadLibrary("advapi32", Advapi32.class);
+	Advapi32 INSTANCE = Native.load("advapi32", Advapi32.class);
     // Optional: wraps every call to the native library in a
     // synchronized block, limiting native calls to one at a time
     Advapi32 SYNC_INSTANCE = (Advapi32) Native.synchronizedLibrary(INSTANCE);

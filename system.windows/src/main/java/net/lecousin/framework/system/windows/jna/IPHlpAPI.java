@@ -4,7 +4,6 @@ import java.net.InetAddress;
 
 import com.sun.jna.Native;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.win32.StdCallLibrary;
 
 // skip checkstyle: TypeName
 // skip checkstyle: MethodName
@@ -12,12 +11,12 @@ import com.sun.jna.win32.StdCallLibrary;
 // skip checkstyle: AbbreviationAsWordInName
 // skip checkstyle: JavadocType
 // skip checkstyle: JavadocMethod
-public interface Iphlpapi extends StdCallLibrary {
+public interface IPHlpAPI extends com.sun.jna.platform.win32.IPHlpAPI {
 
-    Iphlpapi INSTANCE = Native.loadLibrary("iphlpapi", Iphlpapi.class);
+    IPHlpAPI INSTANCE = Native.load("iphlpapi", IPHlpAPI.class);
     // Optional: wraps every call to the native library in a
     // synchronized block, limiting native calls to one at a time
-    Iphlpapi SYNC_INSTANCE = (Iphlpapi) Native.synchronizedLibrary(INSTANCE);
+    IPHlpAPI SYNC_INSTANCE = (IPHlpAPI) Native.synchronizedLibrary(INSTANCE);
 
     int GetAdaptersInfo(byte[] out, IntByReference out_size);
     
