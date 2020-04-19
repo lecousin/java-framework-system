@@ -162,17 +162,19 @@ public class TestDiskArbitration {
 				// search for all IOservices that match the model
 				// getMatchingServices releases matchingDict
 				IOIterator serviceIterator = IOKitUtil.getMatchingServices(matchingDict);
-				IORegistryEntry sdService = serviceIterator.next();
-				while (sdService != null) {
-					// look up the serial number
-					serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
-					JnaInstances.ioKit.IOObjectRelease(sdService);
-					if (serial != null)
-						break;
-					// iterate
-					sdService = serviceIterator.next();
+				if (serviceIterator != null) {
+					IORegistryEntry sdService = serviceIterator.next();
+					while (sdService != null) {
+						// look up the serial number
+						serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
+						JnaInstances.ioKit.IOObjectRelease(sdService);
+						if (serial != null)
+							break;
+						// iterate
+						sdService = serviceIterator.next();
+					}
+					serviceIterator.release();
 				}
-				serviceIterator.release();
 			}
 
 			System.out.println("Disk: " + model + " - " + serial + " - " + size);

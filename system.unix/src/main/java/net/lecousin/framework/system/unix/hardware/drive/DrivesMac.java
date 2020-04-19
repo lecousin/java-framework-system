@@ -269,17 +269,19 @@ public class DrivesMac extends Drives {
 
 			// getMatchingServices releases matchingDict
 			IOIterator serviceIterator = IOKitUtil.getMatchingServices(matchingDict);
-			IORegistryEntry sdService = serviceIterator.next();
-			while (sdService != null) {
-				// look up the serial number
-				drive.serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
-				JnaInstances.ioKit.IOObjectRelease(sdService);
-				if (drive.serial != null)
-					break;
-				// iterate
-				sdService = serviceIterator.next();
+			if (serviceIterator != null) {
+				IORegistryEntry sdService = serviceIterator.next();
+				while (sdService != null) {
+					// look up the serial number
+					drive.serial = IOKit.Util.getIORegistryStringProperty(sdService, "Serial Number");
+					JnaInstances.ioKit.IOObjectRelease(sdService);
+					if (drive.serial != null)
+						break;
+					// iterate
+					sdService = serviceIterator.next();
+				}
+				serviceIterator.release();
 			}
-			serviceIterator.release();
 			JnaInstances.coreFoundation.CFRelease(modelNameRef);
 			JnaInstances.coreFoundation.CFRelease(propertyDict);
 			newDrive(drive);
