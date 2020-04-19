@@ -226,7 +226,7 @@ public class DrivesMac extends Drives {
 		if (diskInfo == null) return;
 		
 		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
-		String model = new CFStringRef(ptr).stringValue();
+		String model = ptr != null ? new CFStringRef(ptr).stringValue() : "null";
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaSize);
 		long size = ptr == null ? -1 : new CFNumberRef(ptr).longValue();
 
@@ -321,7 +321,7 @@ public class DrivesMac extends Drives {
 		if (diskInfo == null) return;
 		
 		Pointer ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDADeviceModel);
-		String model = new CFStringRef(ptr).stringValue();
+		String model = ptr != null ? new CFStringRef(ptr).stringValue() : "null";
 
 		ptr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, strDAMediaBSDName);
 		String bsdName = ptr == null ? null : new CFStringRef(ptr).stringValue();

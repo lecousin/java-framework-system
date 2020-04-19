@@ -143,7 +143,7 @@ public class TestDiskArbitration {
 		CFDictionaryRef diskInfo = da.DADiskCopyDescription(disk);
 		if (diskInfo != null) {
 			Pointer modelPtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.createCFString("DADeviceModel"));
-			String model = new CFStringRef(modelPtr).stringValue();
+			String model = modelPtr != null ? new CFStringRef(modelPtr).stringValue() : "null";
 			Pointer sizePtr = JnaInstances.coreFoundation.CFDictionaryGetValue(diskInfo, CFStringRef.createCFString("DAMediaSize"));
 			long size = sizePtr == null ? -1 : new CFNumberRef(sizePtr).longValue();
 

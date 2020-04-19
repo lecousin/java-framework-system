@@ -14,7 +14,9 @@ jobs:
     - os: osx
       osx_image: xcode9.3
         
-script: mvn test verify install -B 
+script:
+ - mvn enforcer:display-info
+ - mvn test verify install -B 
   
 after_success:
  - bash <(curl -s https://codecov.io/bash)
