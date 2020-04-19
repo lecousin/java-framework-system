@@ -22,7 +22,7 @@ public abstract class Drives {
 	
 	private WorkProgress init;
 
-	protected Drives() {
+	protected void init() {
 		init = new WorkProgressImpl(10000, "Analyzing drives information");
 		// launch init
 		Task.unmanaged("Analyzing drives information", Priority.RATHER_IMPORTANT, t -> {

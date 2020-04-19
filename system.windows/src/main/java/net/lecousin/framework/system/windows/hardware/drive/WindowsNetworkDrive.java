@@ -9,10 +9,10 @@ import net.lecousin.framework.system.hardware.drive.NetworkDrive;
 /**
  * Network drive.
  */
-public class NetworkDriveWin implements NetworkDrive {
+public class WindowsNetworkDrive implements NetworkDrive {
 
 	/** Constructor. */
-	public NetworkDriveWin(File mountPoint) {
+	public WindowsNetworkDrive(File mountPoint) {
 		this.mountPoint = mountPoint;
 	}
 	

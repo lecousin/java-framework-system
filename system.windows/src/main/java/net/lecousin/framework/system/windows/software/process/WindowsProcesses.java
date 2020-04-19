@@ -25,7 +25,7 @@ import net.lecousin.framework.system.windows.jna.Psapi;
  * Implementation of Processes for Windows.
  *
  */
-public class ProcessesWin extends Processes {
+public class WindowsProcesses extends Processes {
 
 	@Override
 	public int getCurrentProcessId() {

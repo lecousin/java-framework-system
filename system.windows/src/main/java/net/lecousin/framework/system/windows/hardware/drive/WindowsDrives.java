@@ -44,7 +44,11 @@ import net.lecousin.framework.system.windows.WindowsUtil;
 import net.lecousin.framework.system.windows.jna.Kernel32;
 
 /** Drives implementation for Windows. */
-public class DrivesWin extends Drives {
+public class WindowsDrives extends Drives {
+	
+	public WindowsDrives() {
+		init();
+	}
 
 	@Override
 	protected void initializeDrives(WorkProgress progress) {
@@ -112,8 +116,8 @@ public class DrivesWin extends Drives {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Readable.Seekable & KnownSize> T openReadOnly(PhysicalDrive drive, Priority priority) throws IOException {
-		if (!(drive instanceof PhysicalDriveWin)) throw new IOException("Invalid drive");
-		PhysicalDriveWin d = (PhysicalDriveWin)drive;
+		if (!(drive instanceof WindowsPhysicalDrive)) throw new IOException("Invalid drive");
+		WindowsPhysicalDrive d = (WindowsPhysicalDrive)drive;
 		HANDLE h = openDevice(d.osId, true, false);
 		Object taskManagerResource = Threading.CPU;
 		for (Object o : Threading.getDrivesManager().getResources())
@@ -228,10 +232,10 @@ public class DrivesWin extends Drives {
         for (String deviceId : devices) {
         	long step = stepDevices / nbSteps--;
         	stepDevices -= step;
-        	PhysicalDriveWin drive = null;
+        	WindowsPhysicalDrive drive = null;
         	if (deviceId.startsWith("PhysicalDrive")) {
         		// new hard disk
-        		drive = new PhysicalDriveWin();
+        		drive = new WindowsPhysicalDrive();
         		drive.osId = deviceId;
         		drive.type = PhysicalDrive.Type.HARDDISK;
         		if (LCSystem.log.debug()) LCSystem.log.debug("Disk detected: " + deviceId);
@@ -298,7 +302,7 @@ public class DrivesWin extends Drives {
         			}
         		}
         	} else if (deviceId.startsWith("CdRom")) {
-        		drive = new PhysicalDriveWin();
+        		drive = new WindowsPhysicalDrive();
         		drive.osId = deviceId;
         		drive.type = PhysicalDrive.Type.CDROM;
         		DiskPartition partition = new DiskPartition();
@@ -429,7 +433,7 @@ public class DrivesWin extends Drives {
         for (Map.Entry<String,File> e : rootsNames.entrySet()) {
         	String device = e.getKey();
         	if (device.startsWith("\\Device\\LanmanRedirector")) {
-        		drives.add(new NetworkDriveWin(e.getValue()));
+        		drives.add(new WindowsNetworkDrive(e.getValue()));
     			if (LCSystem.log.debug())
     				LCSystem.log.debug("Network drive found from device name: " + e.getValue().getAbsolutePath());
         	}
@@ -445,18 +449,18 @@ public class DrivesWin extends Drives {
         	for (Iterator<Drive> it = this.drives.iterator(); it.hasNext(); ) {
         		Drive d = it.next();
         		boolean found = false;
-        		if (d instanceof PhysicalDriveWin) {
+        		if (d instanceof WindowsPhysicalDrive) {
 	        		for (Drive drive : drives) {
-	        			if (!(drive instanceof PhysicalDriveWin)) continue;
-	        			if (((PhysicalDriveWin)drive).osId.equals(((PhysicalDriveWin)d).osId)) {
+	        			if (!(drive instanceof WindowsPhysicalDrive)) continue;
+	        			if (((WindowsPhysicalDrive)drive).osId.equals(((WindowsPhysicalDrive)d).osId)) {
 	        				found = true;
 	        				break;
 	        			}
 	        		}
-        		} else if (d instanceof NetworkDriveWin) {
+        		} else if (d instanceof WindowsNetworkDrive) {
 	        		for (Drive drive : drives) {
-	        			if (!(drive instanceof NetworkDriveWin)) continue;
-	        			if (((NetworkDriveWin)drive).getDriveLetter().equals(((NetworkDriveWin)d).getDriveLetter())) {
+	        			if (!(drive instanceof WindowsNetworkDrive)) continue;
+	        			if (((WindowsNetworkDrive)drive).getDriveLetter().equals(((WindowsNetworkDrive)d).getDriveLetter())) {
 	        				found = true;
 	        				break;
 	        			}
@@ -472,12 +476,12 @@ public class DrivesWin extends Drives {
         	}
         	// check added and modified
 	        for (Drive drive : drives) {
-	        	if (drive instanceof PhysicalDriveWin) {
-	        		PhysicalDriveWin existing = null;
+	        	if (drive instanceof WindowsPhysicalDrive) {
+	        		WindowsPhysicalDrive existing = null;
 		        	for (Drive d : this.drives) {
-		        		if (!(d instanceof PhysicalDriveWin)) continue;
-		        		if (((PhysicalDriveWin)d).osId.equals(((PhysicalDriveWin)drive).osId)) {
-		        			existing = (PhysicalDriveWin)d;
+		        		if (!(d instanceof WindowsPhysicalDrive)) continue;
+		        		if (((WindowsPhysicalDrive)d).osId.equals(((WindowsPhysicalDrive)drive).osId)) {
+		        			existing = (WindowsPhysicalDrive)d;
 		        			break;
 		        		}
 		        	}
@@ -492,7 +496,7 @@ public class DrivesWin extends Drives {
 		        		for (Iterator<DiskPartition> it = existing.partitions.iterator(); it.hasNext(); ) {
 		        			DiskPartition p = it.next();
 		        			boolean found = false;
-		        			for (DiskPartition p2 : ((PhysicalDriveWin)drive).partitions)
+		        			for (DiskPartition p2 : ((WindowsPhysicalDrive)drive).partitions)
 		        				if (p2.OSID.equals(p.OSID)) {
 		        					found = true;
 		        					if (p.mountPoint == null && p2.mountPoint != null) {
@@ -517,7 +521,7 @@ public class DrivesWin extends Drives {
 		        			}
 		        		}
 		        		// check partitions added
-		        		for (DiskPartition p : ((PhysicalDriveWin) drive).partitions) {
+		        		for (DiskPartition p : ((WindowsPhysicalDrive) drive).partitions) {
 		        			boolean found = false;
 		        			for (DiskPartition p2 : existing.partitions)
 		        				if (p2.OSID.equals(p.OSID)) {
@@ -534,11 +538,11 @@ public class DrivesWin extends Drives {
 		        			}
 		        		}
 		        	}
-	        	} else if (drive instanceof NetworkDriveWin) {
+	        	} else if (drive instanceof WindowsNetworkDrive) {
 		        	boolean found = false;
 	        		for (Drive d : this.drives) {
-		        		if (!(d instanceof NetworkDriveWin)) continue;
-		        		if (((NetworkDriveWin)d).getDriveLetter().equals(((NetworkDriveWin)drive).getDriveLetter())) {
+		        		if (!(d instanceof WindowsNetworkDrive)) continue;
+		        		if (((WindowsNetworkDrive)d).getDriveLetter().equals(((WindowsNetworkDrive)drive).getDriveLetter())) {
 		        			found = true;
 		        			break;
 		        		}
@@ -564,11 +568,11 @@ public class DrivesWin extends Drives {
 			String id = map.get("DeviceID");
 			if (id == null) continue;
 			id = id.toLowerCase();
-			PhysicalDriveWin drive = null;
+			WindowsPhysicalDrive drive = null;
 			for (Drive d : drives) {
-				if (!(d instanceof PhysicalDriveWin)) continue;
-				if (id.equals("\\\\.\\" + ((PhysicalDriveWin)d).osId.toLowerCase())) {
-					drive = (PhysicalDriveWin)d;
+				if (!(d instanceof WindowsPhysicalDrive)) continue;
+				if (id.equals("\\\\.\\" + ((WindowsPhysicalDrive)d).osId.toLowerCase())) {
+					drive = (WindowsPhysicalDrive)d;
 					break;
 				}
 			}
@@ -611,11 +615,11 @@ public class DrivesWin extends Drives {
 		list = WMI.instance().query("Win32_CDROMDrive", null, "Size", "DeviceID", "PNPDeviceID", "Manufacturer", "SerialNumber");
 		int index = 0;
 		for (Map<String,String> map : list) {
-			PhysicalDriveWin drive = null;
+			WindowsPhysicalDrive drive = null;
 			for (Drive d : drives) {
-				if (!(d instanceof PhysicalDriveWin)) continue;
-				if (((PhysicalDriveWin)d).osId.equals("CdRom" + index)) {
-					drive = (PhysicalDriveWin)d;
+				if (!(d instanceof WindowsPhysicalDrive)) continue;
+				if (((WindowsPhysicalDrive)d).osId.equals("CdRom" + index)) {
+					drive = (WindowsPhysicalDrive)d;
 					break;
 				}
 			}
@@ -635,8 +639,8 @@ public class DrivesWin extends Drives {
 
 		list = WMI.instance().query("Win32_LogicalDisk", null, "DeviceID", "FileSystem", "VolumeName", "VolumeSerialNumber", "DriveType");
 		for (Drive drive : drives) {
-			if (drive instanceof PhysicalDriveWin) {
-				PhysicalDriveWin pdrive = (PhysicalDriveWin)drive;
+			if (drive instanceof WindowsPhysicalDrive) {
+				WindowsPhysicalDrive pdrive = (WindowsPhysicalDrive)drive;
 				for (DiskPartition p : pdrive.getPartitions()) {
 					File root = p.mountPoint;
 					if (root == null) continue;
@@ -652,7 +656,7 @@ public class DrivesWin extends Drives {
 						}
 					}
 				}
-			} else if (drive instanceof NetworkDriveWin) {
+			} else if (drive instanceof WindowsNetworkDrive) {
 				// nothing
 			}
 		}
@@ -662,8 +666,8 @@ public class DrivesWin extends Drives {
 				String letter = logical.get("DeviceID");
 				boolean found = false;
 				for (Drive d : drives) {
-					if (!(d instanceof NetworkDriveWin)) continue;
-					if (((NetworkDriveWin)d).getDriveLetter().getAbsolutePath().startsWith(letter)) {
+					if (!(d instanceof WindowsNetworkDrive)) continue;
+					if (((WindowsNetworkDrive)d).getDriveLetter().getAbsolutePath().startsWith(letter)) {
 						found = true;
 						break;
 					}
@@ -671,7 +675,7 @@ public class DrivesWin extends Drives {
 				if (!found) {
 					for (File f : File.listRoots()) {
 						if (f.getAbsolutePath().startsWith(letter)) {
-							drives.add(new NetworkDriveWin(f));
+							drives.add(new WindowsNetworkDrive(f));
 		        			if (LCSystem.log.debug())
 		        				LCSystem.log.debug("Network drive found from WMI: " + f.getAbsolutePath());
 							break;
@@ -684,8 +688,8 @@ public class DrivesWin extends Drives {
 
 	private static void checkSerial(List<Drive> drives) {
 		for (Drive d : drives) {
-			if (!(d instanceof PhysicalDriveWin)) continue;
-			PhysicalDriveWin drive = (PhysicalDriveWin)d;
+			if (!(d instanceof WindowsPhysicalDrive)) continue;
+			WindowsPhysicalDrive drive = (WindowsPhysicalDrive)d;
 			if (drive.serial != null) continue;
 			if (drive.infos == null) continue;
 			String pnp = (String)drive.infos.get("pnp");

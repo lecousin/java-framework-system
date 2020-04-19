@@ -36,6 +36,10 @@ import net.lecousin.framework.util.AsyncCloseable;
 
 /** Drives implementation for Linux with udev. */
 public class LinuxDrives extends Drives {
+	
+	public LinuxDrives() {
+		init();
+	}
 
 	@Override
 	protected void initializeDrives(WorkProgress progress) {

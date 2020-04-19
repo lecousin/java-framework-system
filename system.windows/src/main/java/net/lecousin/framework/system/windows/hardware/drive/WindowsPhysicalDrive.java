@@ -11,7 +11,7 @@ import net.lecousin.framework.system.hardware.drive.PhysicalDrive;
 /**
  * Physical drive.
  */
-public class PhysicalDriveWin implements PhysicalDrive {
+public class WindowsPhysicalDrive implements PhysicalDrive {
 
 	@Override
 	public String toString() {
@@ -74,7 +74,7 @@ public class PhysicalDriveWin implements PhysicalDrive {
 	List<DiskPartition> partitions = new ArrayList<>();
 	
 	@Override
-	public boolean equals(Object obj) { return (obj instanceof PhysicalDriveWin) && osId.equals(((PhysicalDriveWin)obj).osId); }
+	public boolean equals(Object obj) { return (obj instanceof WindowsPhysicalDrive) && osId.equals(((WindowsPhysicalDrive)obj).osId); }
 	
 	@Override
 	public int hashCode() { return osId.hashCode(); }

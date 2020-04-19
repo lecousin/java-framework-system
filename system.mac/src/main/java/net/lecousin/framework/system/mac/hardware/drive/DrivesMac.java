@@ -49,6 +49,10 @@ import net.lecousin.framework.util.ProcessUtil;
 public class DrivesMac extends Drives {
 	
 	private static final String DEV_ROOT = "/dev/";
+	
+	public DrivesMac() {
+		init();
+	}
 
 	@Override
 	protected void initializeDrives(WorkProgress progress) {
