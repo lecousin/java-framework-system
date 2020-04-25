@@ -142,7 +142,7 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	
 	@Override
 	public AsyncSupplier<Integer,IOException> readAsync(ByteBuffer buffer, Consumer<Pair<Integer,IOException>> ondone) {
-		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, task -> {
+		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, null, task -> {
 			if (buffer.remaining() == 0) return Integer.valueOf(0);
 			if (sectorPos == 512) {
 				//if (sector_modified) flush_sector();
@@ -172,7 +172,7 @@ public class Win32HandleStream extends ConcurrentCloseable<IOException> implemen
 	
 	@Override
 	public AsyncSupplier<Integer,IOException> readFullyAsync(ByteBuffer buffer, Consumer<Pair<Integer,IOException>> ondone) {
-		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, task -> {
+		Task<Integer,IOException> t = new Task<>(getTaskManager(), "Read", priority, null, task -> {
 			if (buffer.remaining() == 0) return Integer.valueOf(0);
 			if (sectorPos == 512) {
 				//if (sector_modified) flush_sector();
